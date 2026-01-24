@@ -4,9 +4,10 @@ import { orderStatusSchema } from '@/lib/validations'
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const adminSecret = request.headers.get('x-admin-secret')
     
     if (!adminSecret || adminSecret !== process.env.ADMIN_SECRET) {
@@ -20,7 +21,7 @@ export async function PATCH(
     const status = orderStatusSchema.parse(body.status)
 
     const order = await prisma.order.update({
-      where: { id: params.id },
+      where: { id },
       data: { status },
       include: {
         items: {

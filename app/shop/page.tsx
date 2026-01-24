@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import ProductCard from '@/components/ProductCard'
 import { Product, PaginationInfo } from '@/types'
 
-export default function ShopPage() {
+function ShopContent() {
   const searchParams = useSearchParams()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
@@ -152,5 +152,19 @@ export default function ShopPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function ShopPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background py-12">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center">Chargement...</div>
+        </div>
+      </div>
+    }>
+      <ShopContent />
+    </Suspense>
   )
 }

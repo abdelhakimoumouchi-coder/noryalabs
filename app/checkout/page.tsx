@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/contexts/CartContext'
 import { WILAYAS } from '@/lib/validations'
@@ -21,6 +21,12 @@ export default function CheckoutPage() {
     address: '',
     notes: '',
   })
+
+  useEffect(() => {
+    if (items.length === 0 && !success) {
+      router.push('/cart')
+    }
+  }, [items.length, success, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -67,7 +73,6 @@ export default function CheckoutPage() {
   }
 
   if (items.length === 0 && !success) {
-    router.push('/cart')
     return null
   }
 
