@@ -146,6 +146,8 @@ L'application sera accessible sur [http://localhost:3000](http://localhost:3000)
 
 Accéder à `/admin/orders` et utiliser le secret défini dans `.env` pour gérer les commandes.
 
+**Note de sécurité**: L'authentification admin actuelle est basique (client-side) et conçue pour un MVP. Pour la production, implémentez une authentification serveur complète avec sessions ou JWT.
+
 ## Déploiement
 
 ### Variables d'environnement requises

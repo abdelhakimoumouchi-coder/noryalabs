@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import ProductCard from '@/components/ProductCard'
 import { Product, PaginationInfo } from '@/types'
@@ -17,11 +17,7 @@ export default function ShopPage() {
     sort: 'createdAt',
   })
 
-  useEffect(() => {
-    fetchProducts()
-  }, [filters, pagination.page])
-
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     setLoading(true)
     const params = new URLSearchParams({
       page: pagination.page.toString(),
@@ -37,7 +33,11 @@ export default function ShopPage() {
     setProducts(data.products)
     setPagination(data.pagination)
     setLoading(false)
-  }
+  }, [filters, pagination.page])
+
+  useEffect(() => {
+    fetchProducts()
+  }, [fetchProducts])
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

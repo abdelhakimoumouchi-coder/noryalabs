@@ -24,7 +24,7 @@ export default function ProductCard({ product }: { product: Product }) {
         <p className="text-sm text-sage uppercase tracking-wide mb-1">
           {product.category === 'skincare' ? 'Soin de la peau' : 'Soin des cheveux'}
         </p>
-        <h3 className="font-heading text-lg font-semibold text-text mb-2 overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+        <h3 className="font-heading text-lg font-semibold text-text mb-2 line-clamp-2">
           {product.name}
         </h3>
         <p className="text-xl font-bold text-olive">
