@@ -1,7 +1,7 @@
 'use client'
 
 export default function FloatingWhatsApp() {
-  const phoneNumber = '213555123456'
+  const phoneNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '213555123456'
   const message = encodeURIComponent('Bonjour, je suis intéressé par vos produits')
 
   return (

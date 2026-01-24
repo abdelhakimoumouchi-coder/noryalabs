@@ -4,6 +4,10 @@ import { useEffect, useState } from 'react'
 import { formatPrice } from '@/lib/utils'
 import { Order } from '@/types'
 
+// NOTE: This client-side authentication is for MVP/demo purposes only.
+// For production, implement proper server-side authentication with sessions/JWT.
+// The API routes are properly protected with server-side validation.
+
 const STATUSES = [
   { value: 'pending', label: 'En attente', color: 'bg-yellow-100 text-yellow-800' },
   { value: 'confirmed', label: 'Confirmé', color: 'bg-blue-100 text-blue-800' },

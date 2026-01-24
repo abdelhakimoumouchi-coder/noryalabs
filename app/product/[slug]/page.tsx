@@ -6,12 +6,13 @@ import Image from 'next/image'
 import { useCart } from '@/contexts/CartContext'
 import { formatPrice } from '@/lib/utils'
 import { useToast } from '@/components/Toast'
+import { Product } from '@/types'
 
 export default function ProductPage() {
   const params = useParams()
   const { addItem } = useCart()
   const { showToast, ToastComponent } = useToast()
-  const [product, setProduct] = useState<any>(null)
+  const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
   const [quantity, setQuantity] = useState(1)
   const [selectedImage, setSelectedImage] = useState(0)

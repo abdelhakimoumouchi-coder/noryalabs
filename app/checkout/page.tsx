@@ -6,13 +6,17 @@ import { useCart } from '@/contexts/CartContext'
 import { WILAYAS } from '@/lib/validations'
 import { formatPrice } from '@/lib/utils'
 
+interface FormErrors {
+  [key: string]: string
+}
+
 export default function CheckoutPage() {
   const router = useRouter()
   const { items, totalPrice, clearCart } = useCart()
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [orderId, setOrderId] = useState('')
-  const [errors, setErrors] = useState<any>({})
+  const [errors, setErrors] = useState<FormErrors>({})
 
   const [formData, setFormData] = useState({
     customerName: '',
@@ -50,7 +54,7 @@ export default function CheckoutPage() {
 
       if (!res.ok) {
         if (data.details) {
-          const fieldErrors: any = {}
+          const fieldErrors: FormErrors = {}
           data.details.forEach((err: any) => {
             fieldErrors[err.path[0]] = err.message
           })

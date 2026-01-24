@@ -75,7 +75,11 @@ export async function POST(request: NextRequest) {
       return order
     })
 
-    return NextResponse.json({ orderId: result.id, order: result })
+    return NextResponse.json({ 
+      orderId: result.id, 
+      status: result.status,
+      totalDa: result.totalDa 
+    })
   } catch (error: any) {
     console.error('Checkout error:', error)
     

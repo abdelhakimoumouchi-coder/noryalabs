@@ -11,7 +11,7 @@ export const WILAYAS = [
   'In Salah', 'In Guezzam', 'Touggourt', 'Djanet', 'El M\'Ghair', 'El Meniaa'
 ]
 
-const algerianPhoneRegex = /^0[5-7][0-9]{8}$/
+const algerianPhoneRegex = /^0[5-7]\s?\d{2}\s?\d{2}\s?\d{2}\s?\d{2}$/
 
 export const checkoutSchema = z.object({
   customerName: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
