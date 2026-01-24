@@ -3,12 +3,13 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import ProductCard from '@/components/ProductCard'
+import { Product, PaginationInfo } from '@/types'
 
 export default function ShopPage() {
   const searchParams = useSearchParams()
-  const [products, setProducts] = useState<any[]>([])
+  const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
-  const [pagination, setPagination] = useState({ page: 1, totalPages: 1 })
+  const [pagination, setPagination] = useState<PaginationInfo>({ page: 1, totalPages: 1, pageSize: 12, total: 0 })
   const [filters, setFilters] = useState({
     category: searchParams.get('category') || '',
     priceMin: '',

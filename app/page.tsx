@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import ProductCard from '@/components/ProductCard'
+import { Product } from '@/types'
 
 export const dynamic = 'force-dynamic'
 
@@ -8,7 +9,7 @@ export default async function HomePage() {
   const featuredProducts = await prisma.product.findMany({
     where: { isFeatured: true },
     take: 6,
-  })
+  }) as Product[]
 
   return (
     <div>
@@ -71,7 +72,7 @@ export default async function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-            {featuredProducts.map((product: any) => (
+            {featuredProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>

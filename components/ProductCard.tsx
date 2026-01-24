@@ -1,15 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { formatPrice } from '@/lib/utils'
-
-interface Product {
-  id: string
-  slug: string
-  name: string
-  priceDa: number
-  category: string
-  images: string[]
-}
+import { Product } from '@/types'
 
 export default function ProductCard({ product }: { product: Product }) {
   const images = Array.isArray(product.images) ? product.images : []
@@ -32,7 +24,7 @@ export default function ProductCard({ product }: { product: Product }) {
         <p className="text-sm text-sage uppercase tracking-wide mb-1">
           {product.category === 'skincare' ? 'Soin de la peau' : 'Soin des cheveux'}
         </p>
-        <h3 className="font-heading text-lg font-semibold text-text mb-2 line-clamp-2">
+        <h3 className="font-heading text-lg font-semibold text-text mb-2 overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
           {product.name}
         </h3>
         <p className="text-xl font-bold text-olive">

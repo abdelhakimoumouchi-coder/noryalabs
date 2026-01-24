@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { formatPrice, formatDate } from '@/lib/utils'
+import { formatPrice } from '@/lib/utils'
+import { Order } from '@/types'
 
 const STATUSES = [
   { value: 'pending', label: 'En attente', color: 'bg-yellow-100 text-yellow-800' },
@@ -12,19 +13,15 @@ const STATUSES = [
 ]
 
 export default function AdminOrdersPage() {
-  const [orders, setOrders] = useState<any[]>([])
+  const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [adminSecret, setAdminSecret] = useState('')
   const [authenticated, setAuthenticated] = useState(false)
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
-    if (adminSecret === process.env.NEXT_PUBLIC_ADMIN_SECRET || adminSecret) {
-      setAuthenticated(true)
-      fetchOrders()
-    } else {
-      alert('Secret invalide')
-    }
+    setAuthenticated(true)
+    fetchOrders()
   }
 
   const fetchOrders = async () => {
