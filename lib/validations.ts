@@ -14,7 +14,8 @@ export const WILAYAS = [
 const algerianPhoneRegex = /^0[5-7]\s?\d{2}\s?\d{2}\s?\d{2}\s?\d{2}$/
 
 export const checkoutSchema = z.object({
-  customerName: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
+  firstName: z.string().min(2, 'Le prénom doit contenir au moins 2 caractères'),
+  lastName: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
   phone: z.string().regex(algerianPhoneRegex, 'Numéro de téléphone invalide (format: 0X XX XX XX XX)'),
   wilaya: z.enum(WILAYAS as [string, ...string[]], {
     errorMap: () => ({ message: 'Veuillez sélectionner une wilaya' })
@@ -29,6 +30,24 @@ export const checkoutSchema = z.object({
 
 export type CheckoutInput = z.infer<typeof checkoutSchema>
 
-export const orderStatusSchema = z.enum(['pending', 'confirmed', 'shipped', 'delivered', 'canceled'])
-
+export const orderStatusSchema = z.enum(['pending', 'confirmed', 'in_delivery', 'delivered', 'canceled', 'returned'])
 export type OrderStatus = z.infer<typeof orderStatusSchema>
+
+// Accepte URL absolue ou chemin relatif /uploads/...
+const imageStringSchema = z.string().refine(
+  (v) => !!v && (/^https?:\/\//i.test(v) || v.startsWith('/uploads/')),
+  { message: 'Image doit être une URL ou un chemin /uploads/...' }
+)
+
+export const adminProductSchema = z.object({
+  name: z.string().min(2),
+  priceDa: z.number().int().min(0),
+  category: z.string().min(1),
+  description: z.string().min(10),
+  images: z.array(imageStringSchema).min(1),
+  colors: z.array(z.string()).optional(),   // variantes couleur
+  benefits: z.array(z.string()).optional(), // optionnel, défaut côté serveur
+  stock: z.number().int().min(0),
+  isFeatured: z.boolean().optional(),
+  slug: z.string().min(1).optional(),       // auto si non fourni
+})

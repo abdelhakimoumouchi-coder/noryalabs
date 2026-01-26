@@ -19,6 +19,7 @@ model Product {
   description String      @db.Text
   benefits    Json        // string array
   images      Json        // string array
+  colors      Json?       // <--- variantes couleur (ex: ["Noir", "Blanc"])
   stock       Int         @default(0)
   isFeatured  Boolean     @default(false)
   createdAt   DateTime    @default(now())
@@ -28,12 +29,15 @@ model Product {
 
 model Order {
   id           String      @id @default(cuid())
-  status       String      @default("pending") // pending|confirmed|shipped|delivered|canceled
-  customerName String
+  status       OrderStatus @default(pending)
+  firstName    String
+  lastName     String
   phone        String
   wilaya       String
   address      String      @db.Text
   notes        String?     @db.Text
+  subtotalDa   Int
+  shippingDa   Int
   totalDa      Int
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
@@ -49,4 +53,13 @@ model OrderItem {
   subtotalDa  Int
   order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product     Product @relation(fields: [productId], references: [id])
+}
+
+enum OrderStatus {
+  pending
+  confirmed
+  in_delivery
+  delivered
+  canceled
+  returned
 }

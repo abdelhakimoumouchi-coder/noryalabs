@@ -9,7 +9,13 @@ function ShopContent() {
   const searchParams = useSearchParams()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
-  const [pagination, setPagination] = useState<PaginationInfo>({ page: 1, totalPages: 1, pageSize: 12, total: 0 })
+  const [error, setError] = useState<string | null>(null)
+  const [pagination, setPagination] = useState<PaginationInfo>({
+    page: 1,
+    totalPages: 1,
+    pageSize: 12,
+    total: 0,
+  })
   const [filters, setFilters] = useState({
     category: searchParams.get('category') || '',
     priceMin: '',
@@ -17,27 +23,50 @@ function ShopContent() {
     sort: 'createdAt',
   })
 
-  const fetchProducts = useCallback(async () => {
+  const fetchProducts = useCallback(async (signal?: AbortSignal) => {
     setLoading(true)
-    const params = new URLSearchParams({
-      page: pagination.page.toString(),
-      pageSize: '12',
-      ...(filters.category && { category: filters.category }),
-      ...(filters.priceMin && { priceMin: filters.priceMin }),
-      ...(filters.priceMax && { priceMax: filters.priceMax }),
-      sort: filters.sort,
-    })
+    setError(null)
+    try {
+      const params = new URLSearchParams({
+        page: pagination.page.toString(),
+        pageSize: '12',
+        ...(filters.category && { category: filters.category }),
+        ...(filters.priceMin && { priceMin: filters.priceMin }),
+        ...(filters.priceMax && { priceMax: filters.priceMax }),
+        sort: filters.sort,
+      })
 
-    const res = await fetch(`/api/products?${params}`)
-    const data = await res.json()
-    setProducts(data.products)
-    setPagination(data.pagination)
-    setLoading(false)
+      const res = await fetch(`/api/products?${params}`, { signal })
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`)
+      }
+      const data = await res.json()
+      setProducts(data.products)
+      setPagination(data.pagination)
+    } catch (e: any) {
+      if (e?.name === 'AbortError') return
+      setError("Impossible de charger les produits.")
+      setProducts([])
+    } finally {
+      setLoading(false)
+    }
   }, [filters, pagination.page])
 
   useEffect(() => {
-    fetchProducts()
+    const controller = new AbortController()
+    fetchProducts(controller.signal)
+    return () => controller.abort()
   }, [fetchProducts])
+
+  const resetFilters = () => {
+    setFilters({ category: '', priceMin: '', priceMax: '', sort: 'createdAt' })
+    setPagination((p) => ({ ...p, page: 1 }))
+  }
+
+  const setFilterAndResetPage = (partial: Partial<typeof filters>) => {
+    setFilters((f) => ({ ...f, ...partial }))
+    setPagination((p) => ({ ...p, page: 1 }))
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -52,7 +81,7 @@ function ShopContent() {
               <label className="block text-sm font-medium mb-2">Catégorie</label>
               <select
                 value={filters.category}
-                onChange={(e) => setFilters({ ...filters, category: e.target.value })}
+                onChange={(e) => setFilterAndResetPage({ category: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-olive"
               >
                 <option value="">Toutes</option>
@@ -68,14 +97,14 @@ function ShopContent() {
                   type="number"
                   placeholder="Min"
                   value={filters.priceMin}
-                  onChange={(e) => setFilters({ ...filters, priceMin: e.target.value })}
+                  onChange={(e) => setFilterAndResetPage({ priceMin: e.target.value })}
                   className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-olive"
                 />
                 <input
                   type="number"
                   placeholder="Max"
                   value={filters.priceMax}
-                  onChange={(e) => setFilters({ ...filters, priceMax: e.target.value })}
+                  onChange={(e) => setFilterAndResetPage({ priceMax: e.target.value })}
                   className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-olive"
                 />
               </div>
@@ -85,7 +114,7 @@ function ShopContent() {
               <label className="block text-sm font-medium mb-2">Trier par</label>
               <select
                 value={filters.sort}
-                onChange={(e) => setFilters({ ...filters, sort: e.target.value })}
+                onChange={(e) => setFilterAndResetPage({ sort: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-olive"
               >
                 <option value="createdAt">Nouveautés</option>
@@ -96,10 +125,7 @@ function ShopContent() {
             </div>
 
             <button
-              onClick={() => {
-                setFilters({ category: '', priceMin: '', priceMax: '', sort: 'createdAt' })
-                setPagination({ ...pagination, page: 1 })
-              }}
+              onClick={resetFilters}
               className="w-full px-4 py-2 text-sm text-olive border border-olive rounded-lg hover:bg-olive hover:text-white transition-colors"
             >
               Réinitialiser
@@ -112,6 +138,8 @@ function ShopContent() {
             <div className="flex justify-center items-center py-20">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-olive"></div>
             </div>
+          ) : error ? (
+            <div className="text-center py-20 text-red-600">{error}</div>
           ) : (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
@@ -129,7 +157,7 @@ function ShopContent() {
               {pagination.totalPages > 1 && (
                 <div className="flex justify-center gap-2">
                   <button
-                    onClick={() => setPagination({ ...pagination, page: pagination.page - 1 })}
+                    onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
                     disabled={pagination.page === 1}
                     className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                   >
@@ -139,7 +167,7 @@ function ShopContent() {
                     Page {pagination.page} sur {pagination.totalPages}
                   </span>
                   <button
-                    onClick={() => setPagination({ ...pagination, page: pagination.page + 1 })}
+                    onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
                     disabled={pagination.page === pagination.totalPages}
                     className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                   >
@@ -157,13 +185,15 @@ function ShopContent() {
 
 export default function ShopPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-background py-12">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center">Chargement...</div>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background py-12">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="text-center">Chargement...</div>
+          </div>
         </div>
-      </div>
-    }>
+      }
+    >
       <ShopContent />
     </Suspense>
   )

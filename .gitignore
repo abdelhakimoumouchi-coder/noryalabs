@@ -34,3 +34,5 @@ yarn-error.log*
 next-env.d.ts
 node_modules/
 .next/
+
+public/uploads/

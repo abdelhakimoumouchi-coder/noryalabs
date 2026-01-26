@@ -7,20 +7,32 @@ export interface Product {
   description: string
   benefits: string[]
   images: string[]
+  colors?: string[]
   stock: number
   isFeatured: boolean
   createdAt: Date
   updatedAt: Date
 }
 
+export type OrderStatus =
+  | 'pending'
+  | 'confirmed'
+  | 'in_delivery'
+  | 'delivered'
+  | 'canceled'
+  | 'returned'
+
 export interface Order {
   id: string
-  status: string
-  customerName: string
+  status: OrderStatus
+  firstName: string
+  lastName: string
   phone: string
   wilaya: string
   address: string
   notes?: string | null
+  subtotalDa: number
+  shippingDa: number
   totalDa: number
   createdAt: Date
   updatedAt: Date
