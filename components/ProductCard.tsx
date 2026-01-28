@@ -1,9 +1,16 @@
+'use client'
+
 import Link from 'next/link'
 import Image from 'next/image'
 import { formatPrice } from '@/lib/utils'
 import { Product } from '@/types'
+import { useCart } from '@/contexts/CartContext'
+import { useRouter } from 'next/navigation'
 
 export default function ProductCard({ product }: { product: Product }) {
+  const { addItem } = useCart()
+  const router = useRouter()
+
   const rawImages =
     Array.isArray(product.images)
       ? product.images
@@ -28,30 +35,74 @@ export default function ProductCard({ product }: { product: Product }) {
 
   const href = product.slug ? `/product/${product.slug}` : '/shop'
 
+  const handleAddToCart = () => {
+    addItem({
+      productId: product.id,
+      name: product.name,
+      priceDa: product.priceDa,
+      quantity: 1,
+      image: mainImage,
+      slug: product.slug,
+    })
+  }
+
+  const handleBuyNow = () => {
+    handleAddToCart()
+    router.push('/checkout')
+  }
+
   return (
-    <Link
-      href={href}
-      className="group bg-surface rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-    >
-      <div className="relative aspect-square overflow-hidden bg-gray-100">
-        <Image
-          src={mainImage}
-          alt={product.name}
-          fill
-          className="object-cover group-hover:scale-105 transition-transform duration-300"
-        />
-      </div>
+    <div className="group bg-surface rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+      <Link href={href}>
+        <div className="relative aspect-square overflow-hidden bg-gray-100">
+          <Image
+            src={mainImage}
+            alt={product.name}
+            fill
+            className="object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+        </div>
+      </Link>
+
       <div className="p-4">
-        <p className="text-sm text-sage uppercase tracking-wide mb-1">
-          {categoryLabel}
-        </p>
+        <p className="text-sm text-sage uppercase tracking-wide mb-1">{categoryLabel}</p>
         <h3 className="font-heading text-lg font-semibold text-text mb-2 line-clamp-2">
           {product.name}
         </h3>
-        <p className="text-xl font-bold text-olive">
-          {formatPrice(product.priceDa)}
-        </p>
+        <p className="text-xl font-bold text-olive">{formatPrice(product.priceDa)}</p>
+
+        {/* CTA desktop au survol, toujours visible en mobile */}
+        <div className="mt-4 space-y-2">
+          <div className="hidden md:flex opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition duration-200 gap-2">
+            <button
+              onClick={handleAddToCart}
+              className="flex-1 px-3 py-2 text-sm rounded-lg border border-olive text-olive hover:bg-olive hover:text-white transition"
+            >
+              Ajouter au panier
+            </button>
+            <button
+              onClick={handleBuyNow}
+              className="flex-1 px-3 py-2 text-sm rounded-lg bg-olive text-white hover:bg-sage transition"
+            >
+              Acheter maintenant
+            </button>
+          </div>
+          <div className="flex md:hidden gap-2">
+            <button
+              onClick={handleAddToCart}
+              className="flex-1 px-3 py-2 text-sm rounded-lg border border-olive text-olive hover:bg-olive hover:text-white transition"
+            >
+              Ajouter au panier
+            </button>
+            <button
+              onClick={handleBuyNow}
+              className="flex-1 px-3 py-2 text-sm rounded-lg bg-olive text-white hover:bg-sage transition"
+            >
+              Acheter maintenant
+            </button>
+          </div>
+        </div>
       </div>
-    </Link>
+    </div>
   )
 }

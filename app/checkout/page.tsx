@@ -3,12 +3,14 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/contexts/CartContext'
-import { WILAYAS } from '@/lib/validations'
+import { WILAYA_SHIPPING, findShipping } from '@/lib/shipping'
 import { formatPrice } from '@/lib/utils'
 
 interface FormErrors {
   [key: string]: string
 }
+
+const phoneRegex = /^0[567]\d{8}$/
 
 export default function CheckoutPage() {
   const router = useRouter()
@@ -19,12 +21,16 @@ export default function CheckoutPage() {
   const [errors, setErrors] = useState<FormErrors>({})
 
   const [formData, setFormData] = useState({
-    customerName: '',
+    firstName: '',
+    lastName: '',
     phone: '',
     wilaya: '',
     address: '',
     notes: '',
   })
+
+  const shippingDa = findShipping(formData.wilaya)
+  const totalWithShipping = totalPrice + shippingDa
 
   useEffect(() => {
     if (items.length === 0 && !success) {
@@ -32,8 +38,24 @@ export default function CheckoutPage() {
     }
   }, [items.length, success, router])
 
+  const validate = () => {
+    const errs: FormErrors = {}
+    if (!formData.firstName.trim()) errs.firstName = 'Prénom requis'
+    if (!formData.lastName.trim()) errs.lastName = 'Nom requis'
+    if (!phoneRegex.test(formData.phone)) errs.phone = 'Téléphone invalide (10 chiffres, commence par 05/06/07)'
+    if (!formData.wilaya) errs.wilaya = 'Wilaya requise'
+    if (!formData.address.trim()) errs.address = 'Adresse requise'
+    return errs
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    const errs = validate()
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs)
+      return
+    }
+
     setLoading(true)
     setErrors({})
 
@@ -120,16 +142,29 @@ export default function CheckoutPage() {
             <h2 className="font-heading text-2xl font-semibold mb-6">Informations de livraison</h2>
 
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Nom complet *</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.customerName}
-                  onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-olive"
-                />
-                {errors.customerName && <p className="text-red-500 text-sm mt-1">{errors.customerName}</p>}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Prénom *</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.firstName}
+                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-olive"
+                  />
+                  {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Nom *</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.lastName}
+                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-olive"
+                  />
+                  {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>}
+                </div>
               </div>
 
               <div>
@@ -154,8 +189,8 @@ export default function CheckoutPage() {
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-olive"
                 >
                   <option value="">Sélectionner une wilaya</option>
-                  {WILAYAS.map((wilaya) => (
-                    <option key={wilaya} value={wilaya}>{wilaya}</option>
+                  {WILAYA_SHIPPING.map((wilaya) => (
+                    <option key={wilaya.value} value={wilaya.value}>{wilaya.label}</option>
                   ))}
                 </select>
                 {errors.wilaya && <p className="text-red-500 text-sm mt-1">{errors.wilaya}</p>}
@@ -211,10 +246,20 @@ export default function CheckoutPage() {
               ))}
             </div>
 
-            <div className="border-t pt-4 mb-6">
+            <div className="border-t pt-4 mb-2">
+              <div className="flex justify-between items-center text-sm">
+                <span>Subtotal</span>
+                <span>{formatPrice(totalPrice)}</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span>Livraison</span>
+                <span>{formatPrice(shippingDa)}</span>
+              </div>
+            </div>
+            <div className="border-t pt-3 mb-6">
               <div className="flex justify-between items-center">
                 <span className="font-heading text-lg font-semibold">Total</span>
-                <span className="font-heading text-2xl font-bold text-olive">{formatPrice(totalPrice)}</span>
+                <span className="font-heading text-2xl font-bold text-olive">{formatPrice(totalWithShipping)}</span>
               </div>
             </div>
 

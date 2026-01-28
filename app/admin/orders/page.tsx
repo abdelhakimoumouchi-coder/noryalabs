@@ -2,18 +2,15 @@
 
 import { useEffect, useState } from 'react'
 import { formatPrice } from '@/lib/utils'
-import { Order } from '@/types'
+import { Order, OrderStatus } from '@/types'
 
-// NOTE: This client-side authentication is for MVP/demo purposes only.
-// For production, implement proper server-side authentication with sessions/JWT.
-// The API routes are properly protected with server-side validation.
-
-const STATUSES = [
+const STATUSES: { value: OrderStatus; label: string; color: string }[] = [
   { value: 'pending', label: 'En attente', color: 'bg-yellow-100 text-yellow-800' },
   { value: 'confirmed', label: 'Confirmé', color: 'bg-blue-100 text-blue-800' },
-  { value: 'shipped', label: 'Expédié', color: 'bg-purple-100 text-purple-800' },
+  { value: 'in_delivery', label: 'En livraison', color: 'bg-purple-100 text-purple-800' },
   { value: 'delivered', label: 'Livré', color: 'bg-green-100 text-green-800' },
   { value: 'canceled', label: 'Annulé', color: 'bg-red-100 text-red-800' },
+  { value: 'returned', label: 'Retourné', color: 'bg-orange-100 text-orange-800' },
 ]
 
 export default function AdminOrdersPage() {
@@ -38,7 +35,7 @@ export default function AdminOrdersPage() {
       })
       if (res.ok) {
         const data = await res.json()
-        setOrders(data)
+        setOrders(data as Order[])
       }
     } catch (error) {
       console.error('Error fetching orders:', error)
@@ -47,7 +44,7 @@ export default function AdminOrdersPage() {
     }
   }
 
-  const handleStatusChange = async (orderId: string, newStatus: string) => {
+  const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
     try {
       const res = await fetch(`/api/orders/${orderId}`, {
         method: 'PATCH',
@@ -136,7 +133,7 @@ export default function AdminOrdersPage() {
                 return (
                   <tr key={order.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-mono">{order.id.slice(-8)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">{order.customerName}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">{order.firstName} {order.lastName}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">{order.phone}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">{order.wilaya}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold">{formatPrice(order.totalDa)}</td>
@@ -146,7 +143,7 @@ export default function AdminOrdersPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <select
                         value={order.status}
-                        onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                        onChange={(e) => handleStatusChange(order.id, e.target.value as OrderStatus)}
                         className={`px-3 py-1 rounded-full text-xs font-semibold ${status?.color || ''}`}
                       >
                         {STATUSES.map(s => (
