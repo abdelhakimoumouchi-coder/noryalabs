@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma'
 import { findShipping } from '@/lib/shipping'
 
 const phoneRegex = /^0[567]\d{8}$/
+const ACTIVE_STATUSES = ['pending', 'confirmed', 'in_delivery', 'delivered'] as const
+type ActiveStatus = typeof ACTIVE_STATUSES[number]
 
 export async function POST(req: NextRequest) {
   try {
@@ -31,10 +33,10 @@ export async function POST(req: NextRequest) {
       const product = products.find((p) => p.id === item.productId)
       const quantity = Number(item.quantity) || 0
       if (!product || quantity <= 0) {
-        return NextResponse.json(
-          { error: 'Produit introuvable ou quantité invalide' },
-          { status: 400 }
-        )
+        return NextResponse.json({ error: 'Produit introuvable ou quantité invalide' }, { status: 400 })
+      }
+      if (product.stock < quantity) {
+        return NextResponse.json({ error: `Stock insuffisant pour ${product.name}` }, { status: 400 })
       }
       const unitPriceDa = product.priceDa
       const subtotalDa = unitPriceDa * quantity
@@ -45,27 +47,39 @@ export async function POST(req: NextRequest) {
     const shippingDa = findShipping(wilaya)
     const totalDa = subtotal + shippingDa
 
-    const order = await prisma.order.create({
-      data: {
-        firstName,
-        lastName,
-        phone,
-        wilaya,
-        address,
-        notes: notes || '',
-        subtotalDa: subtotal,
-        shippingDa,
-        totalDa,
-        items: {
-          create: orderItems.map((oi) => ({
-            productId: oi.productId,
-            quantity: oi.quantity,
-            unitPriceDa: oi.unitPriceDa,
-            subtotalDa: oi.subtotalDa,
-          })),
+    // Création de la commande + décrément stock en transaction
+    const order = await prisma.$transaction(async (tx) => {
+      // décrément stocks
+      for (const oi of orderItems) {
+        await tx.product.update({
+          where: { id: oi.productId },
+          data: { stock: { decrement: oi.quantity } },
+        })
+      }
+
+      return tx.order.create({
+        data: {
+          firstName,
+          lastName,
+          phone,
+          wilaya,
+          address,
+          notes: notes || '',
+          subtotalDa: subtotal,
+          shippingDa,
+          totalDa,
+          status: 'pending',
+          items: {
+            create: orderItems.map((oi) => ({
+              productId: oi.productId,
+              quantity: oi.quantity,
+              unitPriceDa: oi.unitPriceDa,
+              subtotalDa: oi.subtotalDa,
+            })),
+          },
         },
-      },
-      select: { id: true },
+        select: { id: true },
+      })
     })
 
     return NextResponse.json({ orderId: order.id }, { status: 200 })

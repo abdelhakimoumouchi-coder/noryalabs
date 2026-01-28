@@ -11,20 +11,8 @@ export default function ProductCard({ product }: { product: Product }) {
   const { addItem } = useCart()
   const router = useRouter()
 
-  const rawImages =
-    Array.isArray(product.images)
-      ? product.images
-      : typeof product.images === 'string'
-        ? [product.images]
-        : []
-
-  const normalizedImages = rawImages
-    .filter(Boolean)
-    .map((img) => img.trim())
-    .filter((img) => img.length > 0)
-    .map((img) => (img.startsWith('/') ? img : `/${img}`))
-
-  const mainImage = normalizedImages[0] || '/placeholder.jpg'
+  const images = Array.isArray(product.images) ? product.images : []
+  const mainImage = images[0] || '/placeholder.jpg'
 
   const categoryLabel =
     product.category === 'skincare'
@@ -71,32 +59,33 @@ export default function ProductCard({ product }: { product: Product }) {
         </h3>
         <p className="text-xl font-bold text-olive">{formatPrice(product.priceDa)}</p>
 
-        {/* CTA desktop au survol, toujours visible en mobile */}
         <div className="mt-4 space-y-2">
-          <div className="hidden md:flex opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition duration-200 gap-2">
+          {/* Desktop : visible au survol, empilés */}
+          <div className="hidden md:flex flex-col gap-2 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition duration-200">
             <button
               onClick={handleAddToCart}
-              className="flex-1 px-3 py-2 text-sm rounded-lg border border-olive text-olive hover:bg-olive hover:text-white transition"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-olive text-olive hover:bg-olive hover:text-white transition"
             >
               Ajouter au panier
             </button>
             <button
               onClick={handleBuyNow}
-              className="flex-1 px-3 py-2 text-sm rounded-lg bg-olive text-white hover:bg-sage transition"
+              className="w-full px-3 py-2 text-sm rounded-lg bg-olive text-white hover:bg-sage transition"
             >
               Acheter maintenant
             </button>
           </div>
-          <div className="flex md:hidden gap-2">
+          {/* Mobile : toujours visibles, empilés */}
+          <div className="flex md:hidden flex-col gap-2">
             <button
               onClick={handleAddToCart}
-              className="flex-1 px-3 py-2 text-sm rounded-lg border border-olive text-olive hover:bg-olive hover:text-white transition"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-olive text-olive hover:bg-olive hover:text-white transition"
             >
               Ajouter au panier
             </button>
             <button
               onClick={handleBuyNow}
-              className="flex-1 px-3 py-2 text-sm rounded-lg bg-olive text-white hover:bg-sage transition"
+              className="w-full px-3 py-2 text-sm rounded-lg bg-olive text-white hover:bg-sage transition"
             >
               Acheter maintenant
             </button>
