@@ -4,10 +4,21 @@ import { formatPrice } from '@/lib/utils'
 import { Product } from '@/types'
 
 export default function ProductCard({ product }: { product: Product }) {
-  const images = Array.isArray(product.images) ? product.images : []
-  const mainImage = images[0] || '/placeholder.jpg'
+  const rawImages =
+    Array.isArray(product.images)
+      ? product.images
+      : typeof product.images === 'string'
+        ? [product.images]
+        : []
 
-  // Affichage lisible de la catégorie
+  const normalizedImages = rawImages
+    .filter(Boolean)
+    .map((img) => img.trim())
+    .filter((img) => img.length > 0)
+    .map((img) => (img.startsWith('/') ? img : `/${img}`))
+
+  const mainImage = normalizedImages[0] || '/placeholder.jpg'
+
   const categoryLabel =
     product.category === 'skincare'
       ? 'Soin de la peau'
@@ -15,7 +26,6 @@ export default function ProductCard({ product }: { product: Product }) {
         ? 'Soin des cheveux'
         : product.category || 'Autre'
 
-  // Lien sécurisé (évite slug vide/undefined)
   const href = product.slug ? `/product/${product.slug}` : '/shop'
 
   return (
