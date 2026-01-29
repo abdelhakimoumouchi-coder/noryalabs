@@ -11,14 +11,14 @@ export default function CartPage() {
   if (items.length === 0) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-20 text-center">
-        <svg className="w-24 h-24 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-24 h-24 mx-auto text-muted mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
         </svg>
         <h1 className="font-heading text-3xl font-bold mb-4">Votre panier est vide</h1>
-        <p className="text-text/70 mb-8">Découvrez nos produits naturels algériens</p>
+        <p className="text-muted mb-8">Découvrez nos produits naturels algériens</p>
         <Link
           href="/shop"
-          className="inline-block bg-olive text-white px-8 py-3 rounded-lg font-semibold hover:bg-sage transition-colors"
+          className="inline-block bg-accent text-background px-8 py-3 rounded-lg font-semibold hover:bg-accentDark transition"
         >
           Continuer mes achats
         </Link>
@@ -32,31 +32,31 @@ export default function CartPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
-          <div className="bg-surface rounded-xl shadow-sm overflow-hidden">
+          <div className="bg-surface rounded-xl shadow-sm overflow-hidden border border-border">
             {items.map((item) => (
-              <div key={item.productId} className="flex gap-4 p-6 border-b last:border-b-0">
-                <Link href={`/product/${item.slug}`} className="relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
+              <div key={item.productId} className="flex gap-4 p-6 border-b border-border last:border-b-0">
+                <Link href={`/product/${item.slug}`} className="relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-background border border-border">
                   <Image src={item.image} alt={item.name} fill className="object-cover" />
                 </Link>
 
                 <div className="flex-1">
-                  <Link href={`/product/${item.slug}`} className="font-heading text-lg font-semibold hover:text-olive">
+                  <Link href={`/product/${item.slug}`} className="font-heading text-lg font-semibold hover:text-accent">
                     {item.name}
                   </Link>
-                  <p className="text-olive font-semibold mt-1">{formatPrice(item.priceDa)}</p>
+                  <p className="text-accent font-semibold mt-1">{formatPrice(item.priceDa)}</p>
 
                   <div className="flex items-center gap-4 mt-4">
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => updateQuantity(item.productId, item.quantity - 1)}
-                        className="w-8 h-8 rounded bg-gray-200 hover:bg-gray-300 flex items-center justify-center font-semibold"
+                        className="w-8 h-8 rounded bg-card text-text border border-border hover:border-accent hover:text-accent transition flex items-center justify-center font-semibold"
                       >
                         -
                       </button>
-                      <span className="w-12 text-center font-semibold">{item.quantity}</span>
+                      <span className="w-12 text-center font-semibold text-text">{item.quantity}</span>
                       <button
                         onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                        className="w-8 h-8 rounded bg-gray-200 hover:bg-gray-300 flex items-center justify-center font-semibold"
+                        className="w-8 h-8 rounded bg-card text-text border border-border hover:border-accent hover:text-accent transition flex items-center justify-center font-semibold"
                       >
                         +
                       </button>
@@ -64,7 +64,7 @@ export default function CartPage() {
 
                     <button
                       onClick={() => removeItem(item.productId)}
-                      className="text-red-500 hover:text-red-700 text-sm font-medium ml-auto"
+                      className="text-red-500 hover:text-red-400 text-sm font-medium ml-auto"
                     >
                       Supprimer
                     </button>
@@ -80,37 +80,37 @@ export default function CartPage() {
         </div>
 
         <div className="lg:col-span-1">
-          <div className="bg-surface rounded-xl shadow-sm p-6 sticky top-24">
+          <div className="bg-surface rounded-xl shadow-sm p-6 border border-border sticky top-24">
             <h2 className="font-heading text-xl font-semibold mb-4">Résumé</h2>
 
             <div className="space-y-3 mb-6">
               <div className="flex justify-between">
-                <span className="text-text/70">Articles ({totalItems})</span>
-                <span className="font-semibold">{formatPrice(totalPrice)}</span>
+                <span className="text-muted">Articles ({totalItems})</span>
+                <span className="font-semibold text-text">{formatPrice(totalPrice)}</span>
               </div>
-              <div className="flex justify-between text-sm text-text/70">
+              <div className="flex justify-between text-sm text-muted">
                 <span>Livraison</span>
                 <span>Calculée à la caisse</span>
               </div>
             </div>
 
-            <div className="border-t pt-4 mb-6">
+            <div className="border-t border-border pt-4 mb-6">
               <div className="flex justify-between items-center">
                 <span className="font-heading text-lg font-semibold">Total</span>
-                <span className="font-heading text-2xl font-bold text-olive">{formatPrice(totalPrice)}</span>
+                <span className="font-heading text-2xl font-bold text-accent">{formatPrice(totalPrice)}</span>
               </div>
             </div>
 
             <Link
               href="/checkout"
-              className="block w-full bg-olive text-white text-center py-4 rounded-lg font-semibold hover:bg-sage transition-colors mb-3"
+              className="block w-full bg-accent text-background text-center py-4 rounded-lg font-semibold hover:bg-accentDark transition mb-3"
             >
               Commander
             </Link>
 
             <Link
               href="/shop"
-              className="block w-full text-center text-olive font-medium hover:underline"
+              className="block w-full text-center text-accent font-medium hover:underline"
             >
               Continuer mes achats
             </Link>

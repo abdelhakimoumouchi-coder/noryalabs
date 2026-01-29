@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Product, Category } from '@/types'
 
 export default function AdminProductsPage() {
@@ -106,6 +106,20 @@ export default function AdminProductsPage() {
     else alert('Erreur suppression')
   }
 
+  // Ajout : mise à jour manuelle du stock
+  const handleUpdateStock = async (id: string, newStock: number) => {
+    const res = await fetch(`/api/admin/products/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
+      body: JSON.stringify({ stock: newStock }),
+    })
+    if (res.ok) {
+      setProducts((prev) => prev.map((p) => (p.id === id ? { ...p, stock: newStock } : p)))
+    } else {
+      alert('Erreur mise à jour stock')
+    }
+  }
+
   const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault()
     const res = await fetch('/api/admin/categories', {
@@ -140,10 +154,13 @@ export default function AdminProductsPage() {
     else alert('Erreur renommage catégorie')
   }
 
+  const inputCls = "w-full px-4 py-3 bg-card text-text placeholder:text-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+  const selectCls = "w-full px-4 py-3 bg-card text-text border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+
   if (!authenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="bg-surface p-8 rounded-xl shadow-lg max-w-md w-full">
+        <div className="bg-surface p-8 rounded-xl shadow-lg max-w-md w-full border border-border">
           <h1 className="font-heading text-2xl font-bold mb-6 text-center">Admin - Produits</h1>
           <form onSubmit={handleLogin}>
             <label className="block text-sm font-medium mb-2">Secret Admin</label>
@@ -151,10 +168,10 @@ export default function AdminProductsPage() {
               type="password"
               value={adminSecret}
               onChange={(e) => setAdminSecret(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-olive mb-4"
+              className={`${inputCls} mb-4`}
               placeholder="Entrez le secret admin"
             />
-            <button type="submit" className="w-full bg-olive text-white py-3 rounded-lg font-semibold hover:bg-sage transition-colors">
+            <button type="submit" className="w-full bg-accent text-background py-3 rounded-lg font-semibold hover:bg-accentDark transition-colors">
               Se connecter
             </button>
           </form>
@@ -167,22 +184,21 @@ export default function AdminProductsPage() {
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="flex justify-between items-center mb-6">
         <h1 className="font-heading text-3xl font-bold">Gestion des Produits</h1>
-        <button onClick={() => { fetchProducts(); fetchCategories() }} className="px-4 py-2 bg-olive text-white rounded-lg hover:bg-sage transition-colors">
+        <button onClick={() => { fetchProducts(); fetchCategories() }} className="px-4 py-2 bg-accent text-background rounded-lg hover:bg-accentDark transition-colors">
           Actualiser
         </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
-        <form onSubmit={handleCreate} className="bg-surface p-6 rounded-xl shadow-sm space-y-4">
+        <form onSubmit={handleCreate} className="bg-surface p-6 rounded-xl shadow-sm space-y-4 border border-border">
           <h2 className="font-heading text-xl font-semibold">Ajouter / Mettre à jour</h2>
-          <input required placeholder="Nom" className="w-full px-4 py-3 border rounded-lg"
+          <input required placeholder="Nom" className={inputCls}
             value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-          <input required type="number" placeholder="Prix (DA)" className="w-full px-4 py-3 border rounded-lg"
+          <input required type="number" placeholder="Prix (DA)" className={inputCls}
             value={form.priceDa} onChange={(e) => setForm({ ...form, priceDa: e.target.value })} />
-
           <select
             required
-            className="w-full px-4 py-3 border rounded-lg"
+            className={selectCls}
             value={form.category}
             onChange={(e) => setForm({ ...form, category: e.target.value })}
           >
@@ -191,12 +207,11 @@ export default function AdminProductsPage() {
               <option key={c.id} value={c.name}>{c.name}</option>
             ))}
           </select>
-
-          <textarea required placeholder="Description" className="w-full px-4 py-3 border rounded-lg"
+          <textarea required placeholder="Description" className={inputCls}
             value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Images (upload ou collez une URL par ligne)</label>
+            <label className="text-sm font-medium text-text">Images (upload ou collez une URL par ligne)</label>
             <input
               type="file"
               accept="image/png,image/jpeg"
@@ -205,99 +220,109 @@ export default function AdminProductsPage() {
                 if (!e.target.files?.length) return
                 void handleUpload(e.target.files)
               }}
-              className="w-full"
+              className="text-text text-sm"
             />
             <textarea
               placeholder="Une URL ou /uploads/... par ligne"
-              className="w-full px-4 py-3 border rounded-lg"
+              className={inputCls}
               value={form.images}
               onChange={(e) => setForm({ ...form, images: e.target.value })}
             />
           </div>
 
-          <textarea placeholder="Bénéfices (une ligne par bénéfice)" className="w-full px-4 py-3 border rounded-lg"
+          <textarea placeholder="Bénéfices (une ligne par bénéfice)" className={inputCls}
             value={form.benefits} onChange={(e) => setForm({ ...form, benefits: e.target.value })} />
 
           <input
             placeholder="Caractéristiques (séparées par des virgules)"
-            className="w-full px-4 py-3 border rounded-lg"
+            className={inputCls}
             value={form.characteristics}
             onChange={(e) => setForm({ ...form, characteristics: e.target.value })}
           />
-          <input type="number" placeholder="Stock" className="w-full px-4 py-3 border rounded-lg"
+          <input type="number" placeholder="Stock" className={inputCls}
             value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} />
-          <label className="flex items-center gap-2 text-sm">
+          <label className="flex items-center gap-2 text-sm text-text">
             <input type="checkbox" checked={form.isFeatured} onChange={(e) => setForm({ ...form, isFeatured: e.target.checked })} />
             Mettre en avant
           </label>
-          <button type="submit" className="w-full bg-olive text-white py-3 rounded-lg font-semibold hover:bg-sage transition-colors">
+          <button type="submit" className="w-full bg-accent text-background py-3 rounded-lg font-semibold hover:bg-accentDark transition-colors">
             Enregistrer
           </button>
         </form>
 
-        <div className="bg-surface p-6 rounded-xl shadow-sm space-y-6">
+        <div className="bg-surface p-6 rounded-xl shadow-sm space-y-6 border border-border">
           <div>
             <h2 className="font-heading text-xl font-semibold mb-3">Produits</h2>
             {loading ? (
-              <div>Chargement...</div>
+              <div className="text-muted">Chargement...</div>
             ) : (
               <div className="space-y-3 max-h-[60vh] overflow-y-auto">
                 {products.map((p) => (
-                  <div key={p.id} className="border rounded-lg p-4 flex justify-between items-start">
+                  <div key={p.id} className="border border-border rounded-lg p-4 flex justify-between items-start bg-card">
                     <div>
-                      <div className="font-semibold">{p.name}</div>
-                      <div className="text-sm text-gray-600">{p.category}</div>
-                      <div className="text-sm">Stock: {p.stock}</div>
+                      <div className="font-semibold text-text">{p.name}</div>
+                      <div className="text-sm text-muted">{p.category}</div>
+                      <div className="text-sm text-text">Stock: {p.stock}</div>
                     </div>
-                    <button onClick={() => handleDelete(p.id)} className="text-red-600 hover:underline text-sm">
+                    <button onClick={() => handleDelete(p.id)} className="text-red-500 hover:text-red-400 text-sm">
                       Supprimer
                     </button>
+                    {/* Champ de mise à jour stock */}
+                    <div className="flex items-center gap-2 ml-4">
+                      <span className="text-sm text-text">MAJ stock:</span>
+                      <input
+                        type="number"
+                        className="w-20 px-2 py-1 bg-background text-text border border-border rounded focus:outline-none focus:ring-2 focus:ring-accent"
+                        value={p.stock}
+                        onChange={(e) => handleUpdateStock(p.id, Number(e.target.value || 0))}
+                      />
+                    </div>
                   </div>
                 ))}
-                {products.length === 0 && <div className="text-sm text-gray-500">Aucun produit</div>}
+                {products.length === 0 && <div className="text-sm text-muted">Aucun produit</div>}
               </div>
             )}
           </div>
 
-          <div className="border-t pt-4">
+          <div className="border-t border-border pt-4">
             <h2 className="font-heading text-xl font-semibold mb-3">Catégories</h2>
             <form onSubmit={handleAddCategory} className="space-y-2 mb-4">
               <input
                 required
                 placeholder="Nom de la catégorie"
-                className="w-full px-3 py-2 border rounded-lg"
+                className={inputCls}
                 value={catForm.name}
                 onChange={(e) => setCatForm({ ...catForm, name: e.target.value })}
               />
               <input
                 type="number"
                 placeholder="Ordre (optionnel)"
-                className="w-full px-3 py-2 border rounded-lg"
+                className={inputCls}
                 value={catForm.order}
                 onChange={(e) => setCatForm({ ...catForm, order: e.target.value })}
               />
-              <button className="w-full bg-olive text-white py-2 rounded-lg hover:bg-sage transition-colors">Ajouter</button>
+              <button className="w-full bg-accent text-background py-2 rounded-lg hover:bg-accentDark transition-colors">Ajouter</button>
             </form>
 
             <div className="space-y-2 max-h-64 overflow-y-auto">
               {categories.map((c) => (
-                <div key={c.id} className="flex items-center justify-between border rounded-lg px-3 py-2">
+                <div key={c.id} className="flex items-center justify-between border border-border rounded-lg px-3 py-2 bg-card">
                   <div className="flex-1">
                     <input
-                      className="w-full bg-transparent border-b border-dashed border-gray-300 focus:outline-none focus:border-olive text-sm"
+                      className="w-full bg-transparent border-b border-dashed border-border focus:outline-none focus:border-accent text-sm text-text"
                       value={c.name}
                       onChange={(e) => handleRenameCategory(c.id, e.target.value)}
                     />
                   </div>
                   <button
                     onClick={() => handleDeleteCategory(c.id)}
-                    className="ml-3 text-red-600 text-sm hover:underline"
+                    className="ml-3 text-red-500 text-sm hover:text-red-400"
                   >
                     Supprimer
                   </button>
                 </div>
               ))}
-              {categories.length === 0 && <div className="text-sm text-gray-500">Aucune catégorie</div>}
+              {categories.length === 0 && <div className="text-sm text-muted">Aucune catégorie</div>}
             </div>
           </div>
         </div>

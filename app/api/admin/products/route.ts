@@ -7,41 +7,29 @@ function authorize(req: NextRequest) {
   return adminSecret && adminSecret === process.env.ADMIN_SECRET
 }
 
-function makeSlug(name: string) {
-  const base = name
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-  return base || `prod-${crypto.randomUUID().slice(0, 8)}`
-}
-
-export async function GET(req: NextRequest) {
-  if (!authorize(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const products = await prisma.product.findMany({ orderBy: { createdAt: 'desc' } })
-  return NextResponse.json(products)
-}
-
-export async function POST(req: NextRequest) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!authorize(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   try {
+    const { id } = await params
     const body = await req.json()
-    const data = adminProductSchema.parse(body)
-    const slug = data.slug ?? makeSlug(data.name)
-
-    const product = await prisma.product.create({
-      data: {
-        ...data,
-        slug,
-        benefits: data.benefits ?? [], // requis par Prisma
-      },
-    })
+    const data = adminProductSchema.partial().parse(body)
+    const product = await prisma.product.update({ where: { id }, data })
     return NextResponse.json(product)
   } catch (e: any) {
-    if (e.name === 'ZodError') {
-      return NextResponse.json({ error: 'Validation', details: e.errors }, { status: 400 })
-    }
-    return NextResponse.json({ error: 'Failed to create product', details: e?.message }, { status: 500 })
+    if (e.code === 'P2025') return NextResponse.json({ error: 'Product not found' }, { status: 404 })
+    if (e.name === 'ZodError') return NextResponse.json({ error: 'Validation', details: e.errors }, { status: 400 })
+    return NextResponse.json({ error: 'Failed to update product' }, { status: 500 })
+  }
+}
+
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  if (!authorize(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  try {
+    const { id } = await params
+    await prisma.product.delete({ where: { id } })
+    return NextResponse.json({ success: true })
+  } catch (e: any) {
+    if (e.code === 'P2025') return NextResponse.json({ error: 'Product not found' }, { status: 404 })
+    return NextResponse.json({ error: 'Failed to delete product' }, { status: 500 })
   }
 }

@@ -3,11 +3,15 @@
 import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import ProductCard from '@/components/ProductCard'
-import { Product, PaginationInfo } from '@/types'
+import { Product, PaginationInfo, Category } from '@/types'
+
+const inputCls = 'px-3 py-2 bg-card text-text placeholder:text-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent'
+const selectCls = 'w-full px-3 py-2 bg-card text-text border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent'
 
 function ShopContent() {
   const searchParams = useSearchParams()
   const [products, setProducts] = useState<Product[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [pagination, setPagination] = useState<PaginationInfo>({
@@ -23,6 +27,22 @@ function ShopContent() {
     sort: 'createdAt',
   })
 
+  // Charger les catégories depuis l'API publique
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const res = await fetch('/api/categories')
+        if (res.ok) {
+          const data = await res.json()
+          setCategories(data as Category[])
+        }
+      } catch (e) {
+        console.error('Error fetching categories', e)
+      }
+    }
+    loadCategories()
+  }, [])
+
   const fetchProducts = useCallback(async (signal?: AbortSignal) => {
     setLoading(true)
     setError(null)
@@ -37,9 +57,8 @@ function ShopContent() {
       })
 
       const res = await fetch(`/api/products?${params}`, { signal })
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`)
-      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+
       const data = await res.json()
       setProducts(data.products)
       setPagination(data.pagination)
@@ -74,7 +93,7 @@ function ShopContent() {
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         <aside className="lg:col-span-1">
-          <div className="bg-surface p-6 rounded-xl shadow-sm sticky top-24">
+          <div className="bg-surface p-6 rounded-xl shadow-sm sticky top-24 border border-border">
             <h2 className="font-heading text-xl font-semibold mb-4">Filtres</h2>
 
             <div className="mb-6">
@@ -82,11 +101,12 @@ function ShopContent() {
               <select
                 value={filters.category}
                 onChange={(e) => setFilterAndResetPage({ category: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-olive"
+                className={selectCls}
               >
                 <option value="">Toutes</option>
-                <option value="skincare">Soin de la peau</option>
-                <option value="haircare">Soin des cheveux</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.name}>{c.name}</option>
+                ))}
               </select>
             </div>
 
@@ -98,14 +118,14 @@ function ShopContent() {
                   placeholder="Min"
                   value={filters.priceMin}
                   onChange={(e) => setFilterAndResetPage({ priceMin: e.target.value })}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-olive"
+                  className={inputCls}
                 />
                 <input
                   type="number"
                   placeholder="Max"
                   value={filters.priceMax}
                   onChange={(e) => setFilterAndResetPage({ priceMax: e.target.value })}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-olive"
+                  className={inputCls}
                 />
               </div>
             </div>
@@ -115,7 +135,7 @@ function ShopContent() {
               <select
                 value={filters.sort}
                 onChange={(e) => setFilterAndResetPage({ sort: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-olive"
+                className={selectCls}
               >
                 <option value="createdAt">Nouveautés</option>
                 <option value="price-asc">Prix croissant</option>
@@ -126,7 +146,7 @@ function ShopContent() {
 
             <button
               onClick={resetFilters}
-              className="w-full px-4 py-2 text-sm text-olive border border-olive rounded-lg hover:bg-olive hover:text-white transition-colors"
+              className="w-full px-4 py-2 text-sm text-accent border border-accent rounded-lg hover:bg-accent hover:text-background transition-colors"
             >
               Réinitialiser
             </button>
@@ -136,7 +156,7 @@ function ShopContent() {
         <div className="lg:col-span-3">
           {loading ? (
             <div className="flex justify-center items-center py-20">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-olive"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
             </div>
           ) : error ? (
             <div className="text-center py-20 text-red-600">{error}</div>
@@ -150,16 +170,16 @@ function ShopContent() {
 
               {products.length === 0 && (
                 <div className="text-center py-20">
-                  <p className="text-text/70">Aucun produit trouvé</p>
+                  <p className="text-muted">Aucun produit trouvé</p>
                 </div>
               )}
 
               {pagination.totalPages > 1 && (
-                <div className="flex justify-center gap-2">
+                <div className="flex justify-center gap-2 text-text">
                   <button
                     onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
                     disabled={pagination.page === 1}
-                    className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    className="px-4 py-2 border border-border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:border-accent hover:text-accent transition"
                   >
                     Précédent
                   </button>
@@ -169,7 +189,7 @@ function ShopContent() {
                   <button
                     onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
                     disabled={pagination.page === pagination.totalPages}
-                    className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    className="px-4 py-2 border border-border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:border-accent hover:text-accent transition"
                   >
                     Suivant
                   </button>
@@ -189,7 +209,7 @@ export default function ShopPage() {
       fallback={
         <div className="min-h-screen bg-background py-12">
           <div className="max-w-7xl mx-auto px-4">
-            <div className="text-center">Chargement...</div>
+            <div className="text-center text-text">Chargement...</div>
           </div>
         </div>
       }

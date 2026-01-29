@@ -4,25 +4,51 @@
 
 @layer base {
   body {
-    @apply bg-background text-white font-body antialiased;
+    @apply bg-background text-text font-body antialiased;
+  }
+  a {
+    @apply text-accent hover:text-accentDark transition-colors;
+  }
+
+  /* Champs de formulaire globaux */
+  input,
+  textarea,
+  select {
+    @apply bg-card text-text placeholder:text-muted border border-border rounded-lg
+      focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent;
+  }
+  option {
+    @apply bg-surface text-text;
+  }
+  input:disabled,
+  textarea:disabled,
+  select:disabled {
+    @apply opacity-60 cursor-not-allowed;
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-accent text-white px-8 py-4 rounded-lg font-semibold transition hover:opacity-90;
+    @apply inline-flex items-center justify-center px-6 py-3 rounded-lg font-semibold
+      bg-accent text-background shadow-soft hover:bg-accentDark transition;
   }
-
+  .btn-secondary {
+    @apply inline-flex items-center justify-center px-6 py-3 rounded-lg font-semibold
+      border border-border text-text hover:border-accent hover:text-accent transition;
+  }
+  .card {
+    @apply bg-card border border-border rounded-xl shadow-card;
+  }
   .section-title {
-    @apply font-heading text-3xl md:text-4xl font-bold mb-4 text-white;
+    @apply font-heading text-3xl md:text-4xl font-bold text-text mb-3;
+  }
+  .section-subtitle {
+    @apply text-muted text-base md:text-lg;
   }
 }
 
 @layer utilities {
   .hero-overlay {
-    background: linear-gradient(
-      rgba(28, 31, 38, 0.7),
-      rgba(28, 31, 38, 0.7)
-    );
+    background: linear-gradient(180deg, rgba(8, 10, 16, 0.65), rgba(8, 10, 16, 0.9));
   }
 }
