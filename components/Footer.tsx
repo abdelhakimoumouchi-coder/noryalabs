@@ -6,9 +6,9 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <h3 className="font-heading text-xl font-bold mb-4">Norya Labs</h3>
+            <h3 className="font-heading text-xl font-bold mb-4">Store Dz</h3>
             <p className="text-sm text-gray-300">
-              Beauté naturelle algérienne
+              L'élégance au poignet
             </p>
           </div>
 
@@ -69,7 +69,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-8 pt-8 border-t border-gray-700 text-center text-sm text-gray-400">
-          <p>&copy; {new Date().getFullYear()} Norya Labs. Tous droits réservés.</p>
+          <p>&copy; {new Date().getFullYear()} Store Dz . Tous droits réservés.</p>
         </div>
       </div>
     </footer>

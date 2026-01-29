@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -17,9 +14,9 @@ model Product {
   priceDa     Int
   category    String
   description String      @db.Text
-  benefits    Json        // string array
-  images      Json        // string array
-  colors      Json?       // <--- variantes couleur (ex: ["Noir", "Blanc"])
+  benefits    Json
+  images      Json
+  colors      Json?
   stock       Int         @default(0)
   isFeatured  Boolean     @default(false)
   createdAt   DateTime    @default(now())
@@ -28,20 +25,21 @@ model Product {
 }
 
 model Order {
-  id           String      @id @default(cuid())
-  status       OrderStatus @default(pending)
-  firstName    String
-  lastName     String
-  phone        String
-  wilaya       String
-  address      String      @db.Text
-  notes        String?     @db.Text
-  subtotalDa   Int
-  shippingDa   Int
-  totalDa      Int
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  items        OrderItem[]
+  id            String      @id @default(cuid())
+  status        OrderStatus @default(pending)
+  firstName     String
+  lastName      String
+  phone         String
+  wilaya        String
+  address       String      @db.Text
+  notes         String?     @db.Text
+  subtotalDa    Int
+  shippingDa    Int
+  totalDa       Int
+  stockReserved Boolean     @default(false)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  items         OrderItem[]
 }
 
 model OrderItem {
@@ -53,6 +51,15 @@ model OrderItem {
   subtotalDa  Int
   order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product     Product @relation(fields: [productId], references: [id])
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum OrderStatus {

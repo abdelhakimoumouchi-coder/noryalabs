@@ -4,30 +4,25 @@
 
 @layer base {
   body {
-    @apply bg-background text-text;
+    @apply bg-background text-white font-body antialiased;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-accent text-white px-8 py-4 rounded-lg font-semibold transition hover:opacity-90;
+  }
+
+  .section-title {
+    @apply font-heading text-3xl md:text-4xl font-bold mb-4 text-white;
   }
 }
 
 @layer utilities {
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-  
-  .animate-slide-up {
-    animation: slideUp 0.3s ease-out;
-  }
-  
-  @keyframes slideUp {
-    from {
-      transform: translate(-50%, 100%);
-      opacity: 0;
-    }
-    to {
-      transform: translate(-50%, 0);
-      opacity: 1;
-    }
+  .hero-overlay {
+    background: linear-gradient(
+      rgba(28, 31, 38, 0.7),
+      rgba(28, 31, 38, 0.7)
+    );
   }
 }

@@ -2,25 +2,26 @@ import type { Config } from 'tailwindcss'
 
 const config: Config = {
   content: [
-    './pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './components/**/*.{js,ts,jsx,tsx,mdx}',
-    './app/**/*.{js,ts,jsx,tsx,mdx}',
+    './pages/**/*.{js,ts,jsx,tsx}',
+    './components/**/*.{js,ts,jsx,tsx}',
+    './app/**/*.{js,ts,jsx,tsx}',
   ],
   theme: {
     extend: {
       colors: {
-        background: '#F5F1E8',
-        surface: '#FDFCF9',
-        sage: '#8B9D83',
-        olive: '#6B7C63',
-        text: '#2D2D2D',
+        background: '#1C1F26', // gris anthracite
+        surface: '#FFFFFF',    // blanc
+        text: '#1C1F26',       // texte principal
+        muted: '#E5E7EB',      // gris clair
+        accent: '#3A6EA5',     // bleu acier
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        heading: ['Manrope', 'system-ui', 'sans-serif'],
+        heading: ['Poppins', 'sans-serif'],
+        body: ['Inter', 'sans-serif'],
       },
     },
   },
   plugins: [],
 }
+
 export default config

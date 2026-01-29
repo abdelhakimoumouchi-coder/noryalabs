@@ -49,6 +49,15 @@ export interface OrderItem {
   product?: Product
 }
 
+export interface Category {
+  id: string
+  name: string
+  slug: string
+  order: number
+  createdAt: Date
+  updatedAt: Date
+}
+
 export interface PaginationInfo {
   page: number
   pageSize: number

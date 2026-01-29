@@ -4,7 +4,6 @@ import { findShipping } from '@/lib/shipping'
 
 const phoneRegex = /^0[567]\d{8}$/
 const ACTIVE_STATUSES = ['pending', 'confirmed', 'in_delivery', 'delivered'] as const
-type ActiveStatus = typeof ACTIVE_STATUSES[number]
 
 export async function POST(req: NextRequest) {
   try {
@@ -47,9 +46,7 @@ export async function POST(req: NextRequest) {
     const shippingDa = findShipping(wilaya)
     const totalDa = subtotal + shippingDa
 
-    // Création de la commande + décrément stock en transaction
     const order = await prisma.$transaction(async (tx) => {
-      // décrément stocks
       for (const oi of orderItems) {
         await tx.product.update({
           where: { id: oi.productId },
@@ -69,6 +66,7 @@ export async function POST(req: NextRequest) {
           shippingDa,
           totalDa,
           status: 'pending',
+          stockReserved: true,
           items: {
             create: orderItems.map((oi) => ({
               productId: oi.productId,

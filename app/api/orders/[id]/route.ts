@@ -15,14 +15,12 @@ function isActive(status: string): status is ActiveStatus {
 }
 
 async function adjustStock(deltaSign: 1 | -1, orderId: string) {
-  // deltaSign: -1 pour décrémenter, +1 pour ré-incrémenter
   const order = await prisma.order.findUnique({
     where: { id: orderId },
     include: { items: true },
   })
   if (!order) return { ok: false, notFound: true }
 
-  // vérifier stock avant décrément
   if (deltaSign === -1) {
     for (const item of order.items) {
       const product = await prisma.product.findUnique({ where: { id: item.productId } })
@@ -32,7 +30,6 @@ async function adjustStock(deltaSign: 1 | -1, orderId: string) {
     }
   }
 
-  // appliquer
   await prisma.$transaction(async (tx) => {
     for (const item of order.items) {
       await tx.product.update({
@@ -40,6 +37,10 @@ async function adjustStock(deltaSign: 1 | -1, orderId: string) {
         data: { stock: { increment: deltaSign === 1 ? item.quantity : -item.quantity } },
       })
     }
+    await tx.order.update({
+      where: { id: orderId },
+      data: { stockReserved: deltaSign === -1 },
+    })
   })
 
   return { ok: true }
@@ -69,14 +70,11 @@ export async function PATCH(
     const wasActive = isActive(order.status)
     const willBeActive = isActive(newStatus)
 
-    // Transitions de stock :
-    // inactive -> active : décrémenter
-    // active -> inactive : ré-incrémenter
-    if (!wasActive && willBeActive) {
+    if (!wasActive && willBeActive && !order.stockReserved) {
       const res = await adjustStock(-1, id)
       if (!res.ok) return NextResponse.json({ error: res.error || 'Stock error' }, { status: 400 })
     }
-    if (wasActive && !willBeActive) {
+    if (wasActive && !willBeActive && order.stockReserved) {
       const res = await adjustStock(1, id)
       if (!res.ok) return NextResponse.json({ error: res.error || 'Stock error' }, { status: 400 })
     }
@@ -119,8 +117,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Order not found' }, { status: 404 })
     }
 
-    // Si la commande est dans un statut actif, on ré-incrémente avant suppression
-    if (isActive(order.status)) {
+    if (isActive(order.status) && order.stockReserved) {
       const res = await adjustStock(1, id)
       if (!res.ok) return NextResponse.json({ error: res.error || 'Stock error' }, { status: 400 })
     }

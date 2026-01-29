@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
-import { Product } from '@/types'
+import { useEffect, useState } from 'react'
+import { Product, Category } from '@/types'
 
 export default function AdminProductsPage() {
   const [adminSecret, setAdminSecret] = useState('')
   const [authenticated, setAuthenticated] = useState(false)
   const [products, setProducts] = useState<Product[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({
     name: '',
@@ -15,10 +16,11 @@ export default function AdminProductsPage() {
     description: '',
     images: '',
     benefits: '',
-    colors: '',
+    characteristics: '',
     stock: '',
     isFeatured: false,
   })
+  const [catForm, setCatForm] = useState({ name: '', order: '' })
 
   const fetchProducts = async () => {
     setLoading(true)
@@ -30,10 +32,16 @@ export default function AdminProductsPage() {
     }
   }
 
+  const fetchCategories = async () => {
+    const res = await fetch('/api/admin/categories', { headers: { 'x-admin-secret': adminSecret } })
+    if (res.ok) setCategories(await res.json())
+  }
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
     setAuthenticated(true)
     fetchProducts()
+    fetchCategories()
   }
 
   const handleUpload = async (files: FileList) => {
@@ -64,7 +72,7 @@ export default function AdminProductsPage() {
       description: form.description,
       images: form.images.split('\n').map(s => s.trim()).filter(Boolean),
       benefits: form.benefits ? form.benefits.split('\n').map(s => s.trim()).filter(Boolean) : undefined,
-      colors: form.colors ? form.colors.split(',').map(s => s.trim()).filter(Boolean) : undefined,
+      colors: form.characteristics ? form.characteristics.split(',').map(s => s.trim()).filter(Boolean) : undefined,
       stock: Number(form.stock || '0'),
       isFeatured: !!form.isFeatured,
     }
@@ -81,7 +89,7 @@ export default function AdminProductsPage() {
         description: '',
         images: '',
         benefits: '',
-        colors: '',
+        characteristics: '',
         stock: '',
         isFeatured: false,
       })
@@ -96,6 +104,40 @@ export default function AdminProductsPage() {
     const res = await fetch(`/api/admin/products/${id}`, { method: 'DELETE', headers: { 'x-admin-secret': adminSecret } })
     if (res.ok) fetchProducts()
     else alert('Erreur suppression')
+  }
+
+  const handleAddCategory = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const res = await fetch('/api/admin/categories', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
+      body: JSON.stringify({ name: catForm.name, order: Number(catForm.order || '0') }),
+    })
+    if (res.ok) {
+      setCatForm({ name: '', order: '' })
+      fetchCategories()
+    } else alert('Erreur catégorie')
+  }
+
+  const handleDeleteCategory = async (id: string) => {
+    if (!confirm('Supprimer cette catégorie ?')) return
+    const res = await fetch('/api/admin/categories', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
+      body: JSON.stringify({ id }),
+    })
+    if (res.ok) fetchCategories()
+    else alert('Erreur suppression catégorie')
+  }
+
+  const handleRenameCategory = async (id: string, name: string) => {
+    const res = await fetch('/api/admin/categories', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
+      body: JSON.stringify({ id, name }),
+    })
+    if (res.ok) fetchCategories()
+    else alert('Erreur renommage catégorie')
   }
 
   if (!authenticated) {
@@ -125,7 +167,7 @@ export default function AdminProductsPage() {
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="flex justify-between items-center mb-6">
         <h1 className="font-heading text-3xl font-bold">Gestion des Produits</h1>
-        <button onClick={fetchProducts} className="px-4 py-2 bg-olive text-white rounded-lg hover:bg-sage transition-colors">
+        <button onClick={() => { fetchProducts(); fetchCategories() }} className="px-4 py-2 bg-olive text-white rounded-lg hover:bg-sage transition-colors">
           Actualiser
         </button>
       </div>
@@ -137,8 +179,19 @@ export default function AdminProductsPage() {
             value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           <input required type="number" placeholder="Prix (DA)" className="w-full px-4 py-3 border rounded-lg"
             value={form.priceDa} onChange={(e) => setForm({ ...form, priceDa: e.target.value })} />
-          <input placeholder="Catégorie" className="w-full px-4 py-3 border rounded-lg"
-            value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
+
+          <select
+            required
+            className="w-full px-4 py-3 border rounded-lg"
+            value={form.category}
+            onChange={(e) => setForm({ ...form, category: e.target.value })}
+          >
+            <option value="">Choisir une catégorie</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.name}>{c.name}</option>
+            ))}
+          </select>
+
           <textarea required placeholder="Description" className="w-full px-4 py-3 border rounded-lg"
             value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
 
@@ -165,8 +218,12 @@ export default function AdminProductsPage() {
           <textarea placeholder="Bénéfices (une ligne par bénéfice)" className="w-full px-4 py-3 border rounded-lg"
             value={form.benefits} onChange={(e) => setForm({ ...form, benefits: e.target.value })} />
 
-          <input placeholder="Couleurs (séparées par des virgules)" className="w-full px-4 py-3 border rounded-lg"
-            value={form.colors} onChange={(e) => setForm({ ...form, colors: e.target.value })} />
+          <input
+            placeholder="Caractéristiques (séparées par des virgules)"
+            className="w-full px-4 py-3 border rounded-lg"
+            value={form.characteristics}
+            onChange={(e) => setForm({ ...form, characteristics: e.target.value })}
+          />
           <input type="number" placeholder="Stock" className="w-full px-4 py-3 border rounded-lg"
             value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} />
           <label className="flex items-center gap-2 text-sm">
@@ -178,28 +235,71 @@ export default function AdminProductsPage() {
           </button>
         </form>
 
-        <div className="bg-surface p-6 rounded-xl shadow-sm">
-          <h2 className="font-heading text-xl font-semibold mb-4">Produits</h2>
-          {loading ? (
-            <div>Chargement...</div>
-          ) : (
-            <div className="space-y-3 max-h-[70vh] overflow-y-auto">
-              {products.map((p) => (
-                <div key={p.id} className="border rounded-lg p-4 flex justify-between items-start">
-                  <div>
-                    <div className="font-semibold">{p.name}</div>
-                    <div className="text-sm text-gray-600">{p.category}</div>
-                    <div className="text-sm">{p.colors?.join(', ')}</div>
-                    <div className="text-sm">Stock: {p.stock}</div>
+        <div className="bg-surface p-6 rounded-xl shadow-sm space-y-6">
+          <div>
+            <h2 className="font-heading text-xl font-semibold mb-3">Produits</h2>
+            {loading ? (
+              <div>Chargement...</div>
+            ) : (
+              <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+                {products.map((p) => (
+                  <div key={p.id} className="border rounded-lg p-4 flex justify-between items-start">
+                    <div>
+                      <div className="font-semibold">{p.name}</div>
+                      <div className="text-sm text-gray-600">{p.category}</div>
+                      <div className="text-sm">Stock: {p.stock}</div>
+                    </div>
+                    <button onClick={() => handleDelete(p.id)} className="text-red-600 hover:underline text-sm">
+                      Supprimer
+                    </button>
                   </div>
-                  <button onClick={() => handleDelete(p.id)} className="text-red-600 hover:underline text-sm">
+                ))}
+                {products.length === 0 && <div className="text-sm text-gray-500">Aucun produit</div>}
+              </div>
+            )}
+          </div>
+
+          <div className="border-t pt-4">
+            <h2 className="font-heading text-xl font-semibold mb-3">Catégories</h2>
+            <form onSubmit={handleAddCategory} className="space-y-2 mb-4">
+              <input
+                required
+                placeholder="Nom de la catégorie"
+                className="w-full px-3 py-2 border rounded-lg"
+                value={catForm.name}
+                onChange={(e) => setCatForm({ ...catForm, name: e.target.value })}
+              />
+              <input
+                type="number"
+                placeholder="Ordre (optionnel)"
+                className="w-full px-3 py-2 border rounded-lg"
+                value={catForm.order}
+                onChange={(e) => setCatForm({ ...catForm, order: e.target.value })}
+              />
+              <button className="w-full bg-olive text-white py-2 rounded-lg hover:bg-sage transition-colors">Ajouter</button>
+            </form>
+
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {categories.map((c) => (
+                <div key={c.id} className="flex items-center justify-between border rounded-lg px-3 py-2">
+                  <div className="flex-1">
+                    <input
+                      className="w-full bg-transparent border-b border-dashed border-gray-300 focus:outline-none focus:border-olive text-sm"
+                      value={c.name}
+                      onChange={(e) => handleRenameCategory(c.id, e.target.value)}
+                    />
+                  </div>
+                  <button
+                    onClick={() => handleDeleteCategory(c.id)}
+                    className="ml-3 text-red-600 text-sm hover:underline"
+                  >
                     Supprimer
                   </button>
                 </div>
               ))}
-              {products.length === 0 && <div className="text-sm text-gray-500">Aucun produit</div>}
+              {categories.length === 0 && <div className="text-sm text-gray-500">Aucune catégorie</div>}
             </div>
-          )}
+          </div>
         </div>
       </div>
     </div>
