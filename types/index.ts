@@ -1,9 +1,21 @@
+export interface Subcategory {
+  id: string
+  name: string
+  slug: string
+  order: number
+  categoryId: string
+  createdAt: Date
+  updatedAt: Date
+}
+
 export interface Product {
   id: string
   slug: string
   name: string
   priceDa: number
   category: string
+  subcategoryId?: string | null
+  subcategory?: Subcategory | null
   description: string
   benefits: string[]
   images: string[]

@@ -1,18 +1,20 @@
 'use client'
 
-import { useState } from 'react'
-import { Product, Category } from '@/types'
+import { useState, useEffect } from 'react'
+import { Product, Category, Subcategory } from '@/types'
 
 export default function AdminProductsPage() {
   const [adminSecret, setAdminSecret] = useState('')
   const [authenticated, setAuthenticated] = useState(false)
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
+  const [subcategories, setSubcategories] = useState<Subcategory[]>([])
   const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({
     name: '',
     priceDa: '',
     category: '',
+    subcategoryId: '',
     description: '',
     images: '',
     benefits: '',
@@ -21,6 +23,7 @@ export default function AdminProductsPage() {
     isFeatured: false,
   })
   const [catForm, setCatForm] = useState({ name: '', order: '' })
+  const [subcatForm, setSubcatForm] = useState({ name: '', order: '', categoryId: '' })
 
   const fetchProducts = async () => {
     setLoading(true)
@@ -37,11 +40,26 @@ export default function AdminProductsPage() {
     if (res.ok) setCategories(await res.json())
   }
 
+  const fetchSubcategories = async (categoryId?: string) => {
+    const params = categoryId ? `?categoryId=${categoryId}` : ''
+    const res = await fetch(`/api/admin/subcategories${params}`, { headers: { 'x-admin-secret': adminSecret } })
+    if (res.ok) setSubcategories(await res.json())
+  }
+
+  useEffect(() => {
+    if (authenticated && form.category) {
+      const cat = categories.find((c) => c.name === form.category)
+      if (cat) fetchSubcategories(cat.id)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.category, authenticated])
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
     setAuthenticated(true)
     fetchProducts()
     fetchCategories()
+    fetchSubcategories()
   }
 
   const handleUpload = async (files: FileList) => {
@@ -69,6 +87,7 @@ export default function AdminProductsPage() {
       name: form.name,
       priceDa: Number(form.priceDa),
       category: form.category || 'general',
+      subcategoryId: form.subcategoryId || undefined,
       description: form.description,
       images: form.images.split('\n').map(s => s.trim()).filter(Boolean),
       benefits: form.benefits ? form.benefits.split('\n').map(s => s.trim()).filter(Boolean) : undefined,
@@ -86,6 +105,7 @@ export default function AdminProductsPage() {
         name: '',
         priceDa: '',
         category: '',
+        subcategoryId: '',
         description: '',
         images: '',
         benefits: '',
@@ -106,7 +126,6 @@ export default function AdminProductsPage() {
     else alert('Erreur suppression')
   }
 
-  // Ajout : mise à jour manuelle du stock
   const handleUpdateStock = async (id: string, newStock: number) => {
     const res = await fetch(`/api/admin/products/${id}`, {
       method: 'PATCH',
@@ -154,6 +173,31 @@ export default function AdminProductsPage() {
     else alert('Erreur renommage catégorie')
   }
 
+  // Ajout : simple div + form pour créer une sous-catégorie liée à une catégorie existante
+  const handleAddSubcategory = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!subcatForm.categoryId) {
+      alert('Sélectionnez une catégorie pour la sous-catégorie.')
+      return
+    }
+    const res = await fetch('/api/admin/subcategories', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
+      body: JSON.stringify({
+        name: subcatForm.name,
+        order: Number(subcatForm.order || '0'),
+        categoryId: subcatForm.categoryId,
+      }),
+    })
+    if (res.ok) {
+      const savedCatId = subcatForm.categoryId
+      setSubcatForm({ name: '', order: '', categoryId: '' })
+      fetchSubcategories(savedCatId)
+    } else {
+      alert('Erreur sous-catégorie')
+    }
+  }
+
   const inputCls = "w-full px-4 py-3 bg-card text-text placeholder:text-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
   const selectCls = "w-full px-4 py-3 bg-card text-text border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
 
@@ -184,7 +228,7 @@ export default function AdminProductsPage() {
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="flex justify-between items-center mb-6">
         <h1 className="font-heading text-3xl font-bold">Gestion des Produits</h1>
-        <button onClick={() => { fetchProducts(); fetchCategories() }} className="px-4 py-2 bg-accent text-background rounded-lg hover:bg-accentDark transition-colors">
+        <button onClick={() => { fetchProducts(); fetchCategories(); fetchSubcategories() }} className="px-4 py-2 bg-accent text-background rounded-lg hover:bg-accentDark transition-colors">
           Actualiser
         </button>
       </div>
@@ -200,13 +244,29 @@ export default function AdminProductsPage() {
             required
             className={selectCls}
             value={form.category}
-            onChange={(e) => setForm({ ...form, category: e.target.value })}
+            onChange={(e) => {
+              setForm({ ...form, category: e.target.value, subcategoryId: '' })
+              const cat = categories.find((c) => c.name === e.target.value)
+              if (cat) fetchSubcategories(cat.id)
+            }}
           >
             <option value="">Choisir une catégorie</option>
             {categories.map((c) => (
               <option key={c.id} value={c.name}>{c.name}</option>
             ))}
           </select>
+
+          <select
+            className={selectCls}
+            value={form.subcategoryId}
+            onChange={(e) => setForm({ ...form, subcategoryId: e.target.value })}
+          >
+            <option value="">Sous-catégorie (optionnel)</option>
+            {subcategories.map((s) => (
+              <option key={s.id} value={s.id}>{s.name}</option>
+            ))}
+          </select>
+
           <textarea required placeholder="Description" className={inputCls}
             value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
 
@@ -259,24 +319,22 @@ export default function AdminProductsPage() {
               <div className="space-y-3 max-h-[60vh] overflow-y-auto">
                 {products.map((p) => (
                   <div key={p.id} className="border border-border rounded-lg p-4 flex justify-between items-start bg-card">
-                    <div>
+                    <div className="space-y-1">
                       <div className="font-semibold text-text">{p.name}</div>
-                      <div className="text-sm text-muted">{p.category}</div>
-                      <div className="text-sm text-text">Stock: {p.stock}</div>
+                      <div className="text-sm text-muted">{p.category}{p.subcategory?.name ? ` › ${p.subcategory.name}` : ''}</div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-text">Stock:</span>
+                        <input
+                          type="number"
+                          className="w-20 px-2 py-1 bg-background text-text border border-border rounded focus:outline-none focus:ring-2 focus:ring-accent"
+                          value={p.stock}
+                          onChange={(e) => handleUpdateStock(p.id, Number(e.target.value || 0))}
+                        />
+                      </div>
                     </div>
                     <button onClick={() => handleDelete(p.id)} className="text-red-500 hover:text-red-400 text-sm">
                       Supprimer
                     </button>
-                    {/* Champ de mise à jour stock */}
-                    <div className="flex items-center gap-2 ml-4">
-                      <span className="text-sm text-text">MAJ stock:</span>
-                      <input
-                        type="number"
-                        className="w-20 px-2 py-1 bg-background text-text border border-border rounded focus:outline-none focus:ring-2 focus:ring-accent"
-                        value={p.stock}
-                        onChange={(e) => handleUpdateStock(p.id, Number(e.target.value || 0))}
-                      />
-                    </div>
                   </div>
                 ))}
                 {products.length === 0 && <div className="text-sm text-muted">Aucun produit</div>}
@@ -284,8 +342,8 @@ export default function AdminProductsPage() {
             )}
           </div>
 
-          <div className="border-t border-border pt-4">
-            <h2 className="font-heading text-xl font-semibold mb-3">Catégories</h2>
+          <div className="border-t border-border pt-4 space-y-4">
+            <h2 className="font-heading text-xl font-semibold">Catégories</h2>
             <form onSubmit={handleAddCategory} className="space-y-2 mb-4">
               <input
                 required
@@ -324,6 +382,40 @@ export default function AdminProductsPage() {
               ))}
               {categories.length === 0 && <div className="text-sm text-muted">Aucune catégorie</div>}
             </div>
+
+            {/* Bloc d'ajout sous-catégorie (minimal, sans modifier le reste) */}
+            <div className="border-t border-border pt-4 space-y-2">
+              <h3 className="font-heading text-lg font-semibold">Ajouter une sous-catégorie</h3>
+              <form onSubmit={handleAddSubcategory} className="space-y-2">
+                <select
+                  required
+                  className={selectCls}
+                  value={subcatForm.categoryId}
+                  onChange={(e) => setSubcatForm({ ...subcatForm, categoryId: e.target.value })}
+                >
+                  <option value="">Choisir une catégorie</option>
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+                <input
+                  required
+                  placeholder="Nom de la sous-catégorie"
+                  className={inputCls}
+                  value={subcatForm.name}
+                  onChange={(e) => setSubcatForm({ ...subcatForm, name: e.target.value })}
+                />
+                <input
+                  type="number"
+                  placeholder="Ordre (optionnel)"
+                  className={inputCls}
+                  value={subcatForm.order}
+                  onChange={(e) => setSubcatForm({ ...subcatForm, order: e.target.value })}
+                />
+                <button className="w-full bg-accent text-background py-2 rounded-lg hover:bg-accentDark transition-colors">Ajouter sous-catégorie</button>
+              </form>
+            </div>
+            {/* Fin bloc sous-catégorie */}
           </div>
         </div>
       </div>

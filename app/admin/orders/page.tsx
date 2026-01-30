@@ -133,7 +133,7 @@ export default function AdminOrdersPage() {
           <table className="w-full">
             <thead className="bg-background border-b border-border">
               <tr>
-                {['ID','Client','Téléphone','Wilaya','Total','Date','Statut','Actions'].map((h) => (
+                {['ID','Client','Téléphone','Wilaya','Produits','Total','Date','Statut','Actions'].map((h) => (
                   <th key={h} className="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">{h}</th>
                 ))}
               </tr>
@@ -147,6 +147,19 @@ export default function AdminOrdersPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-text">{order.firstName} {order.lastName}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-text">{order.phone}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-text">{order.wilaya}</td>
+                    <td className="px-6 py-4 text-sm text-text">
+                      <ul className="space-y-1">
+                        {(order.items || []).map((it) => (
+                          <li key={it.id} className="flex justify-between gap-2">
+                            <span className="truncate">{it.product?.name ?? 'Produit'}</span>
+                            <span className="whitespace-nowrap">x{it.quantity}</span>
+                          </li>
+                        ))}
+                        {(!order.items || order.items.length === 0) && (
+                          <span className="text-muted text-xs">Aucun article</span>
+                        )}
+                      </ul>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-text">{formatPrice(order.totalDa)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-muted">
                       {new Date(order.createdAt).toLocaleDateString('fr-DZ')}

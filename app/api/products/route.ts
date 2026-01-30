@@ -5,6 +5,7 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
     const category = searchParams.get('category')
+    const subcategory = searchParams.get('subcategory')
     const priceMin = searchParams.get('priceMin')
     const priceMax = searchParams.get('priceMax')
     const page = parseInt(searchParams.get('page') || '1')
@@ -15,6 +16,9 @@ export async function GET(request: NextRequest) {
     
     if (category) {
       where.category = category
+    }
+    if (subcategory) {
+      where.subcategory = { name: subcategory }
     }
     
     if (priceMin || priceMax) {
@@ -35,6 +39,7 @@ export async function GET(request: NextRequest) {
         orderBy,
         skip: (page - 1) * pageSize,
         take: pageSize,
+        include: { subcategory: true },
       }),
       prisma.product.count({ where }),
     ])

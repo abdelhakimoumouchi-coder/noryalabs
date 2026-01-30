@@ -8,20 +8,36 @@ datasource db {
 }
 
 model Product {
-  id          String      @id @default(cuid())
-  slug        String      @unique
-  name        String
-  priceDa     Int
-  category    String
-  description String      @db.Text
-  benefits    Json
-  images      Json
-  colors      Json?
-  stock       Int         @default(0)
-  isFeatured  Boolean     @default(false)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  orderItems  OrderItem[]
+  id             String       @id @default(cuid())
+  slug           String       @unique
+  name           String
+  priceDa        Int
+  category       String
+  subcategoryId  String?
+  subcategory    Subcategory? @relation(fields: [subcategoryId], references: [id])
+  description    String       @db.Text
+  benefits       Json
+  images         Json
+  colors         Json?
+  stock          Int          @default(0)
+  isFeatured     Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  orderItems     OrderItem[]
+}
+
+model Subcategory {
+  id         String    @id @default(cuid())
+  name       String
+  slug       String    @unique
+  order      Int       @default(0)
+  categoryId String
+  category   Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  products   Product[]
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@unique([categoryId, name])
 }
 
 model Order {
@@ -54,12 +70,13 @@ model OrderItem {
 }
 
 model Category {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  slug      String   @unique
-  order     Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        String         @id @default(cuid())
+  name      String         @unique
+  slug      String         @unique
+  order     Int            @default(0)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  subcats   Subcategory[]
 }
 
 enum OrderStatus {

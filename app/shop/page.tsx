@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import ProductCard from '@/components/ProductCard'
-import { Product, PaginationInfo, Category } from '@/types'
+import { Product, PaginationInfo, Category, Subcategory } from '@/types'
 
 const inputCls = 'px-3 py-2 bg-card text-text placeholder:text-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent'
 const selectCls = 'w-full px-3 py-2 bg-card text-text border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent'
@@ -12,6 +12,7 @@ function ShopContent() {
   const searchParams = useSearchParams()
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
+  const [subcategories, setSubcategories] = useState<Subcategory[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [pagination, setPagination] = useState<PaginationInfo>({
@@ -22,26 +23,34 @@ function ShopContent() {
   })
   const [filters, setFilters] = useState({
     category: searchParams.get('category') || '',
+    subcategory: '',
     priceMin: '',
     priceMax: '',
     sort: 'createdAt',
   })
 
-  // Charger les catégories depuis l'API publique
   useEffect(() => {
-    const loadCategories = async () => {
-      try {
-        const res = await fetch('/api/categories')
-        if (res.ok) {
-          const data = await res.json()
-          setCategories(data as Category[])
-        }
-      } catch (e) {
-        console.error('Error fetching categories', e)
-      }
+    const loadCats = async () => {
+      const res = await fetch('/api/categories')
+      if (res.ok) setCategories(await res.json())
     }
-    loadCategories()
+    loadCats()
   }, [])
+
+  const loadSubcats = useCallback(async (categoryName?: string) => {
+    const cat = categories.find((c) => c.name === categoryName)
+    if (!cat) {
+      setSubcategories([])
+      return
+    }
+    const res = await fetch(`/api/subcategories?categoryId=${cat.id}`)
+    if (res.ok) setSubcategories(await res.json())
+  }, [categories])
+
+  useEffect(() => {
+    if (filters.category) loadSubcats(filters.category)
+    else setSubcategories([])
+  }, [filters.category, loadSubcats])
 
   const fetchProducts = useCallback(async (signal?: AbortSignal) => {
     setLoading(true)
@@ -51,6 +60,7 @@ function ShopContent() {
         page: pagination.page.toString(),
         pageSize: '12',
         ...(filters.category && { category: filters.category }),
+        ...(filters.subcategory && { subcategory: filters.subcategory }),
         ...(filters.priceMin && { priceMin: filters.priceMin }),
         ...(filters.priceMax && { priceMax: filters.priceMax }),
         sort: filters.sort,
@@ -78,8 +88,9 @@ function ShopContent() {
   }, [fetchProducts])
 
   const resetFilters = () => {
-    setFilters({ category: '', priceMin: '', priceMax: '', sort: 'createdAt' })
+    setFilters({ category: '', subcategory: '', priceMin: '', priceMax: '', sort: 'createdAt' })
     setPagination((p) => ({ ...p, page: 1 }))
+    setSubcategories([])
   }
 
   const setFilterAndResetPage = (partial: Partial<typeof filters>) => {
@@ -100,12 +111,32 @@ function ShopContent() {
               <label className="block text-sm font-medium mb-2">Catégorie</label>
               <select
                 value={filters.category}
-                onChange={(e) => setFilterAndResetPage({ category: e.target.value })}
+                onChange={(e) => {
+                  const val = e.target.value
+                  setFilterAndResetPage({ category: val, subcategory: '' })
+                  const cat = categories.find((c) => c.name === val)
+                  if (cat) loadSubcats(val)
+                }}
                 className={selectCls}
               >
                 <option value="">Toutes</option>
                 {categories.map((c) => (
                   <option key={c.id} value={c.name}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium mb-2">Sous-catégorie</label>
+              <select
+                value={filters.subcategory}
+                onChange={(e) => setFilterAndResetPage({ subcategory: e.target.value })}
+                className={selectCls}
+                disabled={!filters.category}
+              >
+                <option value="">Toutes</option>
+                {subcategories.map((s) => (
+                  <option key={s.id} value={s.name}>{s.name}</option>
                 ))}
               </select>
             </div>
