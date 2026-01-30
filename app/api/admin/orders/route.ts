@@ -1,15 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { requireAdmin } from '../_auth'
 
-// ─────────────────────────────
-// GET – list orders (admin)
-// ─────────────────────────────
-export async function GET(req: NextRequest) {
-  const guard = requireAdmin(req)
-  if (guard) return guard
-
+export async function GET(request: NextRequest) {
   try {
+    const adminSecret = request.headers.get('x-admin-secret')
+    
+    if (!adminSecret || adminSecret !== process.env.ADMIN_SECRET) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     const orders = await prisma.order.findMany({
       orderBy: { createdAt: 'desc' },
       include: {
@@ -24,7 +26,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(orders)
   } catch (error) {
     console.error('Error fetching orders:', error)
-
     return NextResponse.json(
       { error: 'Failed to fetch orders' },
       { status: 500 }
