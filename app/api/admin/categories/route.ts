@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAdmin } from '../_auth'
+import { Prisma } from '@prisma/client'
 
 function slugify(name: string) {
   return name
@@ -14,49 +15,91 @@ function slugify(name: string) {
 export async function GET(req: NextRequest) {
   const guard = requireAdmin(req)
   if (guard) return guard
-  const cats = await prisma.category.findMany({ orderBy: { order: 'asc' } })
+
+  const cats = await prisma.category.findMany({
+    orderBy: { order: 'asc' },
+  })
+
   return NextResponse.json(cats)
 }
 
 export async function POST(req: NextRequest) {
   const guard = requireAdmin(req)
   if (guard) return guard
+
   const body = await req.json()
   const name = String(body.name || '').trim()
   const order = Number(body.order ?? 0)
-  if (!name) return NextResponse.json({ error: 'Name required' }, { status: 400 })
+
+  if (!name) {
+    return NextResponse.json(
+      { error: 'Name required' },
+      { status: 400 }
+    )
+  }
+
   const slug = slugify(name)
-  const cat = await prisma.category.create({ data: { name, slug, order } })
+
+  const cat = await prisma.category.create({
+    data: { name, slug, order },
+  })
+
   return NextResponse.json(cat, { status: 201 })
 }
 
 export async function PATCH(req: NextRequest) {
   const guard = requireAdmin(req)
   if (guard) return guard
+
   const body = await req.json()
   const { id, name, order } = body || {}
-  if (!id) return NextResponse.json({ error: 'Id required' }, { status: 400 })
+
+  if (!id) {
+    return NextResponse.json(
+      { error: 'Id required' },
+      { status: 400 }
+    )
+  }
 
   const data: any = {}
+
   if (name) {
     data.name = name.trim()
     data.slug = slugify(name)
   }
-  if (order !== undefined) data.order = Number(order)
 
-  const prev = await prisma.category.findUnique({ where: { id } })
-  if (!prev) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (order !== undefined) {
+    data.order = Number(order)
+  }
 
-  const updated = await prisma.$transaction(async (tx) => {
-    const cat = await tx.category.update({ where: { id }, data })
-    if (name) {
-      await tx.product.updateMany({
-        where: { category: prev.name },
-        data: { category: name.trim() },
-      })
-    }
-    return cat
+  const prev = await prisma.category.findUnique({
+    where: { id },
   })
+
+  if (!prev) {
+    return NextResponse.json(
+      { error: 'Not found' },
+      { status: 404 }
+    )
+  }
+
+  const updated = await prisma.$transaction(
+    async (tx: Prisma.TransactionClient) => {
+      const cat = await tx.category.update({
+        where: { id },
+        data,
+      })
+
+      if (name) {
+        await tx.product.updateMany({
+          where: { category: prev.name },
+          data: { category: name.trim() },
+        })
+      }
+
+      return cat
+    }
+  )
 
   return NextResponse.json(updated)
 }
@@ -64,13 +107,31 @@ export async function PATCH(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const guard = requireAdmin(req)
   if (guard) return guard
+
   const body = await req.json()
   const { id } = body || {}
-  if (!id) return NextResponse.json({ error: 'Id required' }, { status: 400 })
 
-  const cat = await prisma.category.findUnique({ where: { id } })
-  if (!cat) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (!id) {
+    return NextResponse.json(
+      { error: 'Id required' },
+      { status: 400 }
+    )
+  }
 
-  await prisma.category.delete({ where: { id } })
+  const cat = await prisma.category.findUnique({
+    where: { id },
+  })
+
+  if (!cat) {
+    return NextResponse.json(
+      { error: 'Not found' },
+      { status: 404 }
+    )
+  }
+
+  await prisma.category.delete({
+    where: { id },
+  })
+
   return NextResponse.json({ success: true })
 }
