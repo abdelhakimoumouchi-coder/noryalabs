@@ -43,6 +43,7 @@ export const adminProductSchema = z.object({
   name: z.string().min(2),
   priceDa: z.number().int().min(0),
   category: z.string().min(1),
+  subcategoryId: z.string().optional(),
   description: z.string().min(10),
   images: z.array(imageStringSchema).min(1),
   colors: z.array(z.string()).optional(),   // variantes couleur

@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import path from 'path'
 import { promises as fs } from 'fs'
-
+import { NextRequest, NextResponse } from 'next/server'
+import { requireAdmin } from '../_auth'
+// ...
+export async function GET(req: NextRequest) {
+  const guard = requireAdmin(req)
+  if (guard) return guard
+  // suite...
+}
 const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads')
 
 function authorize(req: NextRequest) {

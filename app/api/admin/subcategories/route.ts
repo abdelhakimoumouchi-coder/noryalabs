@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { NextRequest, NextResponse } from 'next/server'
+import { requireAdmin } from '../_auth'
+// ...
+export async function GET(req: NextRequest) {
+  const guard = requireAdmin(req)
+  if (guard) return guard
+  // suite...
+}
 
 function authorize(req: NextRequest) {
   const adminSecret = req.headers.get('x-admin-secret')
