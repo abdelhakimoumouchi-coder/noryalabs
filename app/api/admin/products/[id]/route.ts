@@ -26,10 +26,12 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   if (!authorize(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   try {
     const { id } = await params
+    // Supprime d’abord les items de commande liés pour éviter la contrainte FK
+    await prisma.orderItem.deleteMany({ where: { productId: id } })
     await prisma.product.delete({ where: { id } })
     return NextResponse.json({ success: true })
   } catch (e: any) {
     if (e.code === 'P2025') return NextResponse.json({ error: 'Product not found' }, { status: 404 })
-    return NextResponse.json({ error: 'Failed to delete product' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to delete product', details: e?.message }, { status: 500 })
   }
 }

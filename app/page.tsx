@@ -37,53 +37,90 @@ export default async function HomePage() {
       </section>
 
       {/* PRODUITS VEDETTES */}
-      <section className="py-16 bg-surface">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-8">
-            <h2 className="section-title">Produits Vedettes</h2>
-            <p className="section-subtitle">Nos best-sellers et nouveautés</p>
-          </div>
+      {/* PRODUITS VEDETTES */}
+<section className="py-16 bg-surface">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="text-center mb-8">
+      <h2 className="section-title">Produits Vedettes</h2>
+      <p className="section-subtitle">Nos best-sellers et nouveautés</p>
+    </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-            {featuredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
+    {/* Desktop: grille / Mobile: scrollable row */}
+    <div className="mb-12">
+      <div className="
+        hidden sm:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6
+        ">
+        {featuredProducts.map((product) => (
+          <ProductCard key={product.id} product={product} />
+        ))}
+      </div>
+      <div className="
+        flex sm:hidden gap-4 overflow-x-auto pb-2
+        " style={{ WebkitOverflowScrolling: 'touch' }}>
+        {featuredProducts.map((product) => (
+          <div key={product.id} className="min-w-[260px] flex-shrink-0">
+            <ProductCard product={product} />
           </div>
+        ))}
+      </div>
+    </div>
 
-          <div className="text-center">
-            <Link
-              href="/shop"
-              className="inline-flex items-center justify-center px-8 py-3 rounded-lg font-semibold bg-text text-background hover:bg-text/90 transition"
-            >
-              Voir Tous les Produits
-            </Link>
-          </div>
-        </div>
-      </section>
+    <div className="text-center">
+      <Link
+        href="/shop"
+        className="inline-flex items-center justify-center px-8 py-3 rounded-lg font-semibold bg-text text-background hover:bg-text/90 transition"
+      >
+        Voir Tous les Produits
+      </Link>
+    </div>
+  </div>
+</section>
 
       {/* CATEGORIES CALL-OUT */}
       <section className="py-16" style={{ background: 'linear-gradient(135deg, #0F1420 0%, #0B101A 100%)' }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="card p-8 text-text">
-            <h3 className="font-heading text-2xl font-bold mb-4">Montre Homme</h3>
-            <p className="text-muted mb-4">
-              Collection exclusive, élégance et performance.
-            </p>
-            <Link href="/shop?category=skincare" className="text-accent font-semibold hover:underline">
-              Découvrir →
-            </Link>
-          </div>
-          <div className="card p-8 text-text">
-            <h3 className="font-heading text-2xl font-bold mb-4">Montre Femme</h3>
-            <p className="text-muted mb-4">
-              Style, raffinement et fiabilité au quotidien.
-            </p>
-            <Link href="/shop?category=haircare" className="text-accent font-semibold hover:underline">
-              Découvrir →
-            </Link>
-          </div>
-        </div>
-      </section>
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+    {/* Carte Homme */}
+    <div className="card p-0 text-text overflow-hidden flex flex-row items-stretch">
+      <div className="p-8 flex-1 flex flex-col justify-center">
+        <h3 className="font-heading text-2xl font-bold mb-4">Montre Homme</h3>
+        <p className="text-muted mb-4">
+          Collection exclusive, élégance et performance.
+        </p>
+        <Link
+          href="/shop?category=montre pour homme"
+          className="text-accent font-semibold hover:underline">
+          Découvrir →
+        </Link>
+      </div>
+      <img
+        src="/homme.jpg"
+        alt="Montres Homme"
+        className="w-48 h-full object-cover object-center rounded-r-xl"
+        style={{ minHeight: '170px' }}
+      />
+    </div>
+    {/* Carte Femme */}
+    <div className="card p-0 text-text overflow-hidden flex flex-row items-stretch">
+      <div className="p-8 flex-1 flex flex-col justify-center">
+        <h3 className="font-heading text-2xl font-bold mb-4">Montre Femme</h3>
+        <p className="text-muted mb-4">
+          Style, raffinement et fiabilité au quotidien.
+        </p>
+        <Link
+          href="/shop?category=montre pour femme"
+          className="text-accent font-semibold hover:underline">
+          Découvrir →
+        </Link>
+      </div>
+      <img
+        src="/femme.jpg"
+        alt="Montres Femme"
+        className="w-48 h-full object-cover object-center rounded-r-xl"
+        style={{ minHeight: '170px' }}
+      />
+    </div>
+  </div>
+</section>
 
       {/* AVANTAGES (déplacés en bas de page) */}
       <section className="py-16 bg-surface">
