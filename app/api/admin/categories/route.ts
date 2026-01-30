@@ -1,17 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '../_auth'
-// ...
-export async function GET(req: NextRequest) {
-  const guard = requireAdmin(req)
-  if (guard) return guard
-  // suite...
-}
-function authorize(req: NextRequest) {
-  const adminSecret = req.headers.get('x-admin-secret')
-  return adminSecret && adminSecret === process.env.ADMIN_SECRET
-}
 
 function slugify(name: string) {
   return name
@@ -23,13 +12,15 @@ function slugify(name: string) {
 }
 
 export async function GET(req: NextRequest) {
-  if (!authorize(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const guard = requireAdmin(req)
+  if (guard) return guard
   const cats = await prisma.category.findMany({ orderBy: { order: 'asc' } })
   return NextResponse.json(cats)
 }
 
 export async function POST(req: NextRequest) {
-  if (!authorize(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const guard = requireAdmin(req)
+  if (guard) return guard
   const body = await req.json()
   const name = String(body.name || '').trim()
   const order = Number(body.order ?? 0)
@@ -40,7 +31,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  if (!authorize(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const guard = requireAdmin(req)
+  if (guard) return guard
   const body = await req.json()
   const { id, name, order } = body || {}
   if (!id) return NextResponse.json({ error: 'Id required' }, { status: 400 })
@@ -70,7 +62,8 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  if (!authorize(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const guard = requireAdmin(req)
+  if (guard) return guard
   const body = await req.json()
   const { id } = body || {}
   if (!id) return NextResponse.json({ error: 'Id required' }, { status: 400 })
