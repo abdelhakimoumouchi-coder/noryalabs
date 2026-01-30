@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAdmin } from '../_auth'
-import { Prisma } from '@prisma/client'
 
+// ─────────────────────────────
+// Utils
+// ─────────────────────────────
 function slugify(name: string) {
   return name
     .toLowerCase()
@@ -12,6 +14,9 @@ function slugify(name: string) {
     .replace(/^-+|-+$/g, '')
 }
 
+// ─────────────────────────────
+// GET – list categories
+// ─────────────────────────────
 export async function GET(req: NextRequest) {
   const guard = requireAdmin(req)
   if (guard) return guard
@@ -23,6 +28,9 @@ export async function GET(req: NextRequest) {
   return NextResponse.json(cats)
 }
 
+// ─────────────────────────────
+// POST – create category
+// ─────────────────────────────
 export async function POST(req: NextRequest) {
   const guard = requireAdmin(req)
   if (guard) return guard
@@ -32,10 +40,7 @@ export async function POST(req: NextRequest) {
   const order = Number(body.order ?? 0)
 
   if (!name) {
-    return NextResponse.json(
-      { error: 'Name required' },
-      { status: 400 }
-    )
+    return NextResponse.json({ error: 'Name required' }, { status: 400 })
   }
 
   const slug = slugify(name)
@@ -47,6 +52,9 @@ export async function POST(req: NextRequest) {
   return NextResponse.json(cat, { status: 201 })
 }
 
+// ─────────────────────────────
+// PATCH – update category
+// ─────────────────────────────
 export async function PATCH(req: NextRequest) {
   const guard = requireAdmin(req)
   if (guard) return guard
@@ -55,13 +63,22 @@ export async function PATCH(req: NextRequest) {
   const { id, name, order } = body || {}
 
   if (!id) {
-    return NextResponse.json(
-      { error: 'Id required' },
-      { status: 400 }
-    )
+    return NextResponse.json({ error: 'Id required' }, { status: 400 })
   }
 
-  const data: any = {}
+  const prev = await prisma.category.findUnique({
+    where: { id },
+  })
+
+  if (!prev) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  }
+
+  const data: {
+    name?: string
+    slug?: string
+    order?: number
+  } = {}
 
   if (name) {
     data.name = name.trim()
@@ -72,38 +89,28 @@ export async function PATCH(req: NextRequest) {
     data.order = Number(order)
   }
 
-  const prev = await prisma.category.findUnique({
-    where: { id },
-  })
+  const updated = await prisma.$transaction(async (tx) => {
+    const cat = await tx.category.update({
+      where: { id },
+      data,
+    })
 
-  if (!prev) {
-    return NextResponse.json(
-      { error: 'Not found' },
-      { status: 404 }
-    )
-  }
-
-  const updated = await prisma.$transaction(
-    async (tx: Prisma.TransactionClient) => {
-      const cat = await tx.category.update({
-        where: { id },
-        data,
+    if (name) {
+      await tx.product.updateMany({
+        where: { category: prev.name },
+        data: { category: name.trim() },
       })
-
-      if (name) {
-        await tx.product.updateMany({
-          where: { category: prev.name },
-          data: { category: name.trim() },
-        })
-      }
-
-      return cat
     }
-  )
+
+    return cat
+  })
 
   return NextResponse.json(updated)
 }
 
+// ─────────────────────────────
+// DELETE – delete category
+// ─────────────────────────────
 export async function DELETE(req: NextRequest) {
   const guard = requireAdmin(req)
   if (guard) return guard
@@ -112,10 +119,7 @@ export async function DELETE(req: NextRequest) {
   const { id } = body || {}
 
   if (!id) {
-    return NextResponse.json(
-      { error: 'Id required' },
-      { status: 400 }
-    )
+    return NextResponse.json({ error: 'Id required' }, { status: 400 })
   }
 
   const cat = await prisma.category.findUnique({
@@ -123,10 +127,7 @@ export async function DELETE(req: NextRequest) {
   })
 
   if (!cat) {
-    return NextResponse.json(
-      { error: 'Not found' },
-      { status: 404 }
-    )
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
 
   await prisma.category.delete({
