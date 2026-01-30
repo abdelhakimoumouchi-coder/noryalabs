@@ -89,7 +89,7 @@ export async function PATCH(req: NextRequest) {
     data.order = Number(order)
   }
 
-  const updated = await prisma.$transaction(async (tx) => {
+  const updated = await prisma.$transaction(async (tx: any) => {
     const cat = await tx.category.update({
       where: { id },
       data,
