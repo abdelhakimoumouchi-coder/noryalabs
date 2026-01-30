@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import type { Product } from '@prisma/client'
 
 // ─────────────────────────────
 // Types
@@ -33,11 +32,14 @@ export async function POST(req: NextRequest) {
       },
     })
 
+    // ✅ type réel Prisma
+    type ProductRow = typeof products[number]
+
     let total = 0
 
     for (const item of items) {
       const product = products.find(
-        (p: Product) => p.id === item.productId
+        (p: ProductRow) => p.id === item.productId
       )
 
       const quantity = Number(item.quantity) || 0
