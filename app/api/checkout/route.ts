@@ -38,10 +38,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Produit introuvable' }, { status: 400 })
     }
 
+    // ✅ alias de type pour typer le paramètre de find
+    type ProductRow = (typeof products)[number]
+
     // 4) Construire les lignes + calculs
     let subtotalDa = 0
     const orderItems = parsed.items.map((item) => {
-      const product = products.find((p) => p.id === item.productId)!
+      const product = products.find((p: ProductRow) => p.id === item.productId)!
       const qty = Number(item.quantity) || 0
       if (qty <= 0) throw new Error('Quantité invalide')
       if (product.stock !== undefined && product.stock < qty) {
