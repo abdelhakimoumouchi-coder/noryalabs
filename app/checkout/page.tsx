@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useCart } from '@/contexts/CartContext'
 import { WILAYA_SHIPPING, findShipping } from '@/lib/shipping'
 import { formatPrice } from '@/lib/utils'
+import { Turnstile } from '@marsidev/react-turnstile' // <-- ajout
 
 interface FormErrors {
   [key: string]: string
@@ -19,6 +20,7 @@ export default function CheckoutPage() {
   const [success, setSuccess] = useState(false)
   const [orderId, setOrderId] = useState('')
   const [errors, setErrors] = useState<FormErrors>({})
+  const [token, setToken] = useState<string | null>(null) // <-- ajout
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -45,6 +47,7 @@ export default function CheckoutPage() {
     if (!phoneRegex.test(formData.phone)) errs.phone = 'Téléphone invalide (10 chiffres, commence par 05/06/07)'
     if (!formData.wilaya) errs.wilaya = 'Wilaya requise'
     if (!formData.address.trim()) errs.address = 'Adresse requise'
+    if (!token) errs.captcha = 'Captcha requis' // <-- ajout
     return errs
   }
 
@@ -69,6 +72,7 @@ export default function CheckoutPage() {
             productId: item.productId,
             quantity: item.quantity,
           })),
+          turnstileToken: token, // <-- ajout
         }),
       })
 
@@ -82,7 +86,7 @@ export default function CheckoutPage() {
           })
           setErrors(fieldErrors)
         } else {
-          alert(data.error || 'Erreur lors de la commande')
+          setErrors(prev => ({ ...prev, captcha: data.error || 'Erreur lors de la commande' })) // <-- ajout
         }
         setLoading(false)
         return
@@ -92,7 +96,7 @@ export default function CheckoutPage() {
       setSuccess(true)
       clearCart()
     } catch (error) {
-      alert('Erreur lors de la commande')
+      setErrors(prev => ({ ...prev, captcha: 'Erreur lors de la commande' })) // <-- ajout
     } finally {
       setLoading(false)
     }
@@ -218,6 +222,18 @@ export default function CheckoutPage() {
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-olive"
                   placeholder="Instructions de livraison..."
                 />
+              </div>
+
+              {/* Widget Turnstile */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium">Vérification</label>
+                <Turnstile
+                  siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
+                  onSuccess={(t) => setToken(t)}
+                  onExpire={() => setToken(null)}
+                  onError={() => setToken(null)}
+                />
+                {errors.captcha && <p className="text-red-500 text-sm mt-1">{errors.captcha}</p>}
               </div>
             </div>
 
