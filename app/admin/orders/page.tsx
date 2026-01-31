@@ -16,21 +16,15 @@ const STATUSES: { value: OrderStatus; label: string; color: string }[] = [
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
-  const [adminSecret, setAdminSecret] = useState('')
-  const [authenticated, setAuthenticated] = useState(false)
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault()
-    setAuthenticated(true)
-    fetchOrders()
-  }
 
   const fetchOrders = async () => {
     setLoading(true)
     try {
-      const res = await fetch('/api/admin/orders', {
-        headers: { 'x-admin-secret': adminSecret },
-      })
+      const res = await fetch('/api/admin/orders')
+      if (res.status === 401) {
+        window.location.href = '/admin/login'
+        return
+      }
       if (res.ok) {
         const data = await res.json()
         setOrders(data as Order[])
@@ -46,13 +40,9 @@ export default function AdminOrdersPage() {
     try {
       const res = await fetch(`/api/orders/${orderId}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-secret': adminSecret,
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
       })
-
       if (res.ok) {
         setOrders(orders.map(order =>
           order.id === orderId ? { ...order, status: newStatus } : order
@@ -68,10 +58,7 @@ export default function AdminOrdersPage() {
   const handleDelete = async (orderId: string) => {
     if (!confirm('Supprimer cette commande ?')) return
     try {
-      const res = await fetch(`/api/orders/${orderId}`, {
-        method: 'DELETE',
-        headers: { 'x-admin-secret': adminSecret },
-      })
+      const res = await fetch(`/api/orders/${orderId}`, { method: 'DELETE' })
       if (res.ok) {
         setOrders(orders.filter((o) => o.id !== orderId))
       } else {
@@ -82,31 +69,7 @@ export default function AdminOrdersPage() {
     }
   }
 
-  if (!authenticated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="bg-surface p-8 rounded-xl shadow-lg max-w-md w-full border border-border">
-          <h1 className="font-heading text-2xl font-bold mb-6 text-center">Admin - Gestion des Commandes</h1>
-          <form onSubmit={handleLogin}>
-            <label className="block text-sm font-medium mb-2">Secret Admin</label>
-            <input
-              type="password"
-              value={adminSecret}
-              onChange={(e) => setAdminSecret(e.target.value)}
-              className="w-full px-4 py-3 bg-card text-text placeholder:text-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent mb-4"
-              placeholder="Entrez le secret admin"
-            />
-            <button
-              type="submit"
-              className="w-full bg-accent text-background py-3 rounded-lg font-semibold hover:bg-accentDark transition-colors"
-            >
-              Se connecter
-            </button>
-          </form>
-        </div>
-      </div>
-    )
-  }
+  useEffect(() => { fetchOrders() }, [])
 
   if (loading) {
     return (
