@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import type { Prisma } from '@prisma/client'   // <-- ajouté
 import { checkoutSchema } from '@/lib/validations'
 import { findShipping } from '@/lib/shipping'
 
@@ -15,33 +16,24 @@ async function verifyTurnstile(token: string | undefined) {
   return data.success === true
 }
 
-// ─────────────────────────────
-// POST – créer la commande
-// ─────────────────────────────
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-
-    // 1) Validation des données
     const parsed = checkoutSchema.parse(body)
 
-    // 2) Captcha obligatoire
     const captchaOk = await verifyTurnstile((body as any).turnstileToken)
     if (!captchaOk) {
       return NextResponse.json({ error: 'Captcha failed' }, { status: 400 })
     }
 
-    // 3) Charger les produits
     const productIds = parsed.items.map((i) => i.productId)
     const products = await prisma.product.findMany({ where: { id: { in: productIds } } })
     if (products.length !== productIds.length) {
       return NextResponse.json({ error: 'Produit introuvable' }, { status: 400 })
     }
 
-    // ✅ alias de type pour typer le paramètre de find
     type ProductRow = (typeof products)[number]
 
-    // 4) Construire les lignes + calculs
     let subtotalDa = 0
     const orderItems = parsed.items.map((item) => {
       const product = products.find((p: ProductRow) => p.id === item.productId)!
@@ -63,8 +55,7 @@ export async function POST(req: NextRequest) {
     const shippingDa = findShipping(parsed.wilaya)
     const totalDa = subtotalDa + shippingDa
 
-    // 5) Transaction : décrémenter le stock et créer la commande + items
-    const order = await prisma.$transaction(async (tx) => {
+    const order = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       for (const item of orderItems) {
         await tx.product.update({
           where: { id: item.productId },
