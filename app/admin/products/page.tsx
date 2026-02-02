@@ -27,7 +27,6 @@ export default function AdminProductsPage() {
   const [catForm, setCatForm] = useState({ name: '', order: '' })
   const [subcatForm, setSubcatForm] = useState({ name: '', order: '', categoryId: '' })
 
-  // Redirige vers /admin/login si le cookie admin_session n’est pas accepté
   const handleUnauthorized = () => {
     window.location.href = '/admin/login'
   }
@@ -127,10 +126,10 @@ export default function AdminProductsPage() {
   }
 
   const handleUpdateStock = async (id: string, stock: number) => {
-    const res = await fetch('/api/admin/products', {
+    const res = await fetch(`/api/admin/products/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, stock }),
+      body: JSON.stringify({ stock }),
     })
     if (res.status === 401) return handleUnauthorized()
     if (res.ok) fetchProducts()
@@ -138,11 +137,7 @@ export default function AdminProductsPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Supprimer ce produit ?')) return
-    const res = await fetch('/api/admin/products', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id }),
-    })
+    const res = await fetch(`/api/admin/products/${id}`, { method: 'DELETE' })
     if (res.status === 401) return handleUnauthorized()
     if (res.ok) fetchProducts()
   }
@@ -208,13 +203,31 @@ export default function AdminProductsPage() {
           <input className={inputCls} placeholder="Nom" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
           <input className={inputCls} placeholder="Slug (optionnel)" value={form.slug} onChange={e => setForm({ ...form, slug: e.target.value })} />
           <input className={inputCls} type="number" placeholder="Prix (DA)" value={form.priceDa} onChange={e => setForm({ ...form, priceDa: e.target.value })} />
-          <input className={inputCls} placeholder="Catégorie" value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} />
-          <select className={inputCls} value={form.subcategoryId} onChange={e => setForm({ ...form, subcategoryId: e.target.value })}>
+
+          {/* Catégorie en select */}
+          <select
+            className={inputCls}
+            value={form.category}
+            onChange={e => setForm({ ...form, category: e.target.value, subcategoryId: '' })}
+          >
+            <option value="">Choisir une catégorie</option>
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.name}>{cat.name}</option>
+            ))}
+          </select>
+
+          {/* Sous-catégorie filtrée par la catégorie choisie */}
+          <select
+            className={inputCls}
+            value={form.subcategoryId}
+            onChange={e => setForm({ ...form, subcategoryId: e.target.value })}
+          >
             <option value="">Sous-catégorie (optionnel)</option>
             {subcatsForSelectedCategory.map(sc => (
               <option key={sc.id} value={sc.id}>{sc.name}</option>
             ))}
           </select>
+
           <textarea className={inputCls} placeholder="Description" rows={3} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
           <textarea className={inputCls} placeholder="Images (1 URL par ligne)" rows={3} value={form.images} onChange={e => setForm({ ...form, images: e.target.value })} />
           <textarea className={inputCls} placeholder="Bénéfices (1 par ligne)" rows={3} value={form.benefits} onChange={e => setForm({ ...form, benefits: e.target.value })} />
@@ -236,6 +249,7 @@ export default function AdminProductsPage() {
         </form>
 
         <div className="space-y-6">
+          {/* Catégories */}
           <form onSubmit={handleCreateCategory} className="bg-surface p-4 rounded-xl border border-border shadow-sm space-y-3">
             <h2 className="font-heading text-lg font-semibold">Catégories</h2>
             <input className={inputCls} placeholder="Nom" value={catForm.name} onChange={e => setCatForm({ ...catForm, name: e.target.value })} />
@@ -248,6 +262,7 @@ export default function AdminProductsPage() {
             </ul>
           </form>
 
+          {/* Sous-catégories */}
           <form onSubmit={handleCreateSubcategory} className="bg-surface p-4 rounded-xl border border-border shadow-sm space-y-3">
             <h2 className="font-heading text-lg font-semibold">Sous-catégories</h2>
             <select className={inputCls} value={subcatForm.categoryId} onChange={e => setSubcatForm({ ...subcatForm, categoryId: e.target.value })}>
