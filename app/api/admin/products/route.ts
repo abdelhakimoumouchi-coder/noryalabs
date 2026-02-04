@@ -18,6 +18,13 @@ function makeSlug(name: string) {
   return base || `prod-${crypto.randomUUID().slice(0, 8)}`
 }
 
+function ensureLocalUploads(images: unknown): string[] {
+  const arr = Array.isArray(images) ? images : []
+  return arr
+    .map((src) => (typeof src === 'string' ? src : ''))
+    .filter((src) => src.startsWith('/uploads/'))
+}
+
 // ─────────────────────────────
 // GET – list products
 // ─────────────────────────────
@@ -45,12 +52,15 @@ export async function POST(req: NextRequest) {
     const data = adminProductSchema.parse(body)
 
     const slug = data.slug ?? makeSlug(data.name)
+    const images = ensureLocalUploads(data.images)
+    const safeImages = images.length ? images : ['/placeholder.jpg']
 
     const product = await prisma.product.create({
       data: {
         ...data,
         slug,
         benefits: data.benefits ?? [],
+        images: safeImages,
       },
     })
 
@@ -64,8 +74,8 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: 'Failed to create product', details: e?.message },
-      { status: 500 }
+        { error: 'Failed to create product', details: e?.message },
+        { status: 500 }
     )
   }
 }

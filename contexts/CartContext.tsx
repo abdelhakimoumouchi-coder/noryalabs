@@ -23,23 +23,48 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
 
+const STORAGE_KEY = 'cart'
+
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
   const [isHydrated, setIsHydrated] = useState(false)
 
+  // Lecture sécurisée du localStorage
   useEffect(() => {
-    const stored = localStorage.getItem('cart')
-    if (stored) {
-      setItems(JSON.parse(stored))
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY)
+      if (raw) {
+        setItems(JSON.parse(raw))
+      }
+    } catch (e) {
+      console.warn('Cart storage corrompu, réinitialisation.', e)
+      localStorage.removeItem(STORAGE_KEY)
+    } finally {
+      setIsHydrated(true)
     }
-    setIsHydrated(true)
   }, [])
 
+  // Persistance
   useEffect(() => {
     if (isHydrated) {
-      localStorage.setItem('cart', JSON.stringify(items))
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
     }
   }, [items, isHydrated])
+
+  // Synchronisation multi-onglets
+  useEffect(() => {
+    const handler = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY && e.newValue) {
+        try {
+          setItems(JSON.parse(e.newValue))
+        } catch {
+          /* ignore */
+        }
+      }
+    }
+    window.addEventListener('storage', handler)
+    return () => window.removeEventListener('storage', handler)
+  }, [])
 
   const addItem = (newItem: CartItem) => {
     setItems(current => {
@@ -71,9 +96,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     )
   }
 
-  const clearCart = () => {
-    setItems([])
-  }
+  const clearCart = () => setItems([])
 
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0)
   const totalPrice = items.reduce((sum, item) => sum + item.priceDa * item.quantity, 0)

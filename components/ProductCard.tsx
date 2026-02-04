@@ -7,12 +7,19 @@ import { Product } from '@/types'
 import { useCart } from '@/contexts/CartContext'
 import { useRouter } from 'next/navigation'
 
+const FALLBACK_IMG = '/placeholder.jpg'
+
+const pickLocalImage = (images: string[]) => {
+  if (!Array.isArray(images)) return FALLBACK_IMG
+  const local = images.find((src) => src.startsWith('/uploads/'))
+  return local || FALLBACK_IMG
+}
+
 export default function ProductCard({ product }: { product: Product }) {
   const { addItem } = useCart()
   const router = useRouter()
 
-  const images = Array.isArray(product.images) ? product.images : []
-  const mainImage = images[0] || '/placeholder.jpg'
+  const mainImage = pickLocalImage(product.images || [])
 
   const categoryLabel =
     product.category === 'skincare'
@@ -30,7 +37,7 @@ export default function ProductCard({ product }: { product: Product }) {
       priceDa: product.priceDa,
       quantity: 1,
       image: mainImage,
-      slug: product.slug,
+      slug: product.slug ?? '',
     })
   }
 
@@ -40,26 +47,36 @@ export default function ProductCard({ product }: { product: Product }) {
   }
 
   return (
-    <div className="group card overflow-hidden hover:shadow-lg hover:-translate-y-1 transition duration-200">
-      <Link href={href}>
-        <div className="relative aspect-square overflow-hidden bg-background">
+    <div className="group card overflow-hidden bg-gradient-to-b from-card to-surface hover:shadow-soft hover:-translate-y-1 transition duration-200 border border-border/60 rounded-xl">
+      <Link href={href} className="block">
+        <div className="relative aspect-square overflow-hidden bg-highlight">
           <Image
             src={mainImage}
             alt={product.name}
             fill
+            sizes="(max-width:768px) 100vw, 33vw"
             className="object-cover group-hover:scale-105 transition-transform duration-300"
+            onError={(e) => {
+              const img = e.target as HTMLImageElement
+              img.src = FALLBACK_IMG
+            }}
           />
+          {product.isFeatured && (
+            <span className="absolute top-3 left-3 bg-accent text-background text-xs font-semibold px-3 py-1 rounded-full shadow-soft">
+              Coup de cœur
+            </span>
+          )}
         </div>
       </Link>
 
-      <div className="p-4">
-        <p className="text-sm text-muted uppercase tracking-wide mb-1">{categoryLabel}</p>
-        <h3 className="font-heading text-lg font-semibold text-text mb-1 line-clamp-2">
+      <div className="p-4 space-y-3">
+        <p className="text-xs text-muted uppercase tracking-wide">{categoryLabel}</p>
+        <h3 className="font-heading text-lg font-semibold text-text line-clamp-2">
           {product.name}
         </h3>
         <p className="text-xl font-bold text-accent">{formatPrice(product.priceDa)}</p>
 
-        <div className="mt-4 space-y-2">
+        <div className="space-y-2">
           <div className="hidden md:flex flex-col gap-2 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition duration-200">
             <button
               onClick={handleAddToCart}

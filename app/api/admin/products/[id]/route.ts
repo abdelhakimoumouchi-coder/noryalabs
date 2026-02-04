@@ -3,6 +3,13 @@ import { prisma } from '@/lib/prisma'
 import { adminProductSchema } from '@/lib/validations'
 import { requireAdmin } from '../../_auth'
 
+function ensureLocalUploads(images: unknown): string[] {
+  const arr = Array.isArray(images) ? images : []
+  return arr
+    .map((src) => (typeof src === 'string' ? src : ''))
+    .filter((src) => src.startsWith('/uploads/'))
+}
+
 // ─────────────────────────────
 // PATCH – update product
 // ─────────────────────────────
@@ -19,9 +26,16 @@ export async function PATCH(
 
     const data = adminProductSchema.partial().parse(body)
 
+    const payload: typeof data & { images?: string[] } = { ...data }
+
+    if ('images' in data) {
+      const imgs = ensureLocalUploads(data.images)
+      payload.images = imgs.length ? imgs : ['/placeholder.jpg']
+    }
+
     const product = await prisma.product.update({
       where: { id },
-      data,
+      data: payload,
     })
 
     return NextResponse.json(product)
@@ -60,7 +74,6 @@ export async function DELETE(
   try {
     const { id } = params
 
-    // Supprimer d’abord les items liés (FK)
     await prisma.orderItem.deleteMany({
       where: { productId: id },
     })
