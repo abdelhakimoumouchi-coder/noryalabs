@@ -15,7 +15,7 @@ function slugify(name: string) {
 }
 
 // ─────────────────────────────
-// GET – list categories
+// GET – list categories WITH subcategories
 // ─────────────────────────────
 export async function GET(req: NextRequest) {
   const guard = requireAdmin(req)
@@ -23,6 +23,11 @@ export async function GET(req: NextRequest) {
 
   const cats = await prisma.category.findMany({
     orderBy: { order: 'asc' },
+    include: {
+      subcats: {
+        orderBy: { name: 'asc' },
+      },
+    },
   })
 
   return NextResponse.json(cats)

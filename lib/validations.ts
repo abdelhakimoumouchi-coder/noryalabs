@@ -30,7 +30,15 @@ export const checkoutSchema = z.object({
 
 export type CheckoutInput = z.infer<typeof checkoutSchema>
 
-export const orderStatusSchema = z.enum(['pending', 'confirmed', 'in_delivery', 'delivered', 'canceled', 'returned'])
+export const orderStatusSchema = z.enum([
+  'pending',
+  'confirmed',
+  'in_delivery',
+  'delivered',
+  'canceled',
+  'returned'
+])
+
 export type OrderStatus = z.infer<typeof orderStatusSchema>
 
 // Accepte URL absolue ou chemin relatif /uploads/...
@@ -39,16 +47,30 @@ const imageStringSchema = z.string().refine(
   { message: 'Image doit être une URL ou un chemin /uploads/...' }
 )
 
+// ✅ VERSION CORRIGÉE COMPATIBLE FRONTEND
 export const adminProductSchema = z.object({
   name: z.string().min(2),
+
   priceDa: z.number().int().min(0),
+
   category: z.string().min(1),
-  subcategoryId: z.string().optional(),
+
+  // accepte null
+  subcategoryId: z.string().nullable().optional(),
+
   description: z.string().min(10),
+
+  // multi images obligatoires
   images: z.array(imageStringSchema).min(1),
-  colors: z.array(z.string()).optional(),   // variantes couleur
-  benefits: z.array(z.string()).optional(), // optionnel, défaut côté serveur
+
+  colors: z.array(z.string()).optional(),
+
+  benefits: z.array(z.string()).optional(),
+
   stock: z.number().int().min(0),
-  isFeatured: z.boolean().optional(),
-  slug: z.string().min(1).optional(),       // auto si non fourni
+
+  // correspond à ton frontend (featured)
+  featured: z.boolean().optional(),
+
+  slug: z.string().min(1).optional(),
 })

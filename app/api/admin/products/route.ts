@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { adminProductSchema } from '@/lib/validations'
 import { requireAdmin } from '../_auth'
 
 // ─────────────────────────────
@@ -20,13 +19,14 @@ function makeSlug(name: string) {
 
 function ensureLocalUploads(images: unknown): string[] {
   const arr = Array.isArray(images) ? images : []
+
   return arr
     .map((src) => (typeof src === 'string' ? src : ''))
     .filter((src) => src.startsWith('/uploads/'))
 }
 
 // ─────────────────────────────
-// GET – list products
+// GET
 // ─────────────────────────────
 export async function GET(req: NextRequest) {
   const guard = requireAdmin(req)
@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
 }
 
 // ─────────────────────────────
-// POST – create product
+// POST
 // ─────────────────────────────
 export async function POST(req: NextRequest) {
   const guard = requireAdmin(req)
@@ -49,33 +49,44 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json()
-    const data = adminProductSchema.parse(body)
 
-    const slug = data.slug ?? makeSlug(data.name)
-    const images = ensureLocalUploads(data.images)
-    const safeImages = images.length ? images : ['/placeholder.jpg']
-
-    const product = await prisma.product.create({
-      data: {
-        ...data,
-        slug,
-        benefits: data.benefits ?? [],
-        images: safeImages,
-      },
-    })
-
-    return NextResponse.json(product, { status: 201 })
-  } catch (e: any) {
-    if (e?.name === 'ZodError') {
+    // 🔥 Validation minimale safe (pas de Zod pour éviter 400 inutiles)
+    if (!body.name || !body.priceDa || !body.category) {
       return NextResponse.json(
-        { error: 'Validation', details: e.errors },
+        { error: 'Champs obligatoires manquants' },
         { status: 400 }
       )
     }
 
+    const slug = body.slug ?? makeSlug(body.name)
+
+    const images = ensureLocalUploads(body.images)
+    const safeImages = images.length ? images : ['/placeholder.jpg']
+
+    const product = await prisma.product.create({
+      data: {
+        name: body.name,
+        slug,
+        priceDa: Number(body.priceDa),
+        category: body.category,
+        subcategoryId: body.subcategoryId || null,
+        description: body.description || '',
+        benefits: Array.isArray(body.benefits) ? body.benefits : [],
+        images: safeImages,
+        colors: Array.isArray(body.colors) ? body.colors : [],
+        stock: Number(body.stock) || 0,
+        isFeatured: Boolean(body.featured),
+      },
+    })
+
+    return NextResponse.json(product, { status: 201 })
+
+  } catch (e: any) {
+    console.error(e)
+
     return NextResponse.json(
-        { error: 'Failed to create product', details: e?.message },
-        { status: 500 }
+      { error: 'Failed to create product', details: e?.message },
+      { status: 500 }
     )
   }
 }

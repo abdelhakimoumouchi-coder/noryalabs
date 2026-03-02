@@ -11,6 +11,38 @@ function ensureLocalUploads(images: unknown): string[] {
 }
 
 // ─────────────────────────────
+// GET – single product
+// ─────────────────────────────
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const guard = requireAdmin(req)
+  if (guard) return guard
+
+  try {
+    const product = await prisma.product.findUnique({
+      where: { id: params.id },
+    })
+
+    if (!product) {
+      return NextResponse.json(
+        { error: 'Product not found' },
+        { status: 404 }
+      )
+    }
+
+    return NextResponse.json(product)
+
+  } catch (e: any) {
+    return NextResponse.json(
+      { error: 'Failed to fetch product', details: e.message },
+      { status: 500 }
+    )
+  }
+}
+
+// ─────────────────────────────
 // PATCH – update product
 // ─────────────────────────────
 export async function PATCH(
@@ -21,24 +53,24 @@ export async function PATCH(
   if (guard) return guard
 
   try {
-    const { id } = params
     const body = await req.json()
 
     const data = adminProductSchema.partial().parse(body)
 
-    const payload: typeof data & { images?: string[] } = { ...data }
+    const payload: any = { ...data }
 
     if ('images' in data) {
       const imgs = ensureLocalUploads(data.images)
       payload.images = imgs.length ? imgs : ['/placeholder.jpg']
     }
 
-    const product = await prisma.product.update({
-      where: { id },
+    const updated = await prisma.product.update({
+      where: { id: params.id },
       data: payload,
     })
 
-    return NextResponse.json(product)
+    return NextResponse.json(updated)
+
   } catch (e: any) {
     if (e?.code === 'P2025') {
       return NextResponse.json(
@@ -72,17 +104,16 @@ export async function DELETE(
   if (guard) return guard
 
   try {
-    const { id } = params
-
     await prisma.orderItem.deleteMany({
-      where: { productId: id },
+      where: { productId: params.id },
     })
 
     await prisma.product.delete({
-      where: { id },
+      where: { id: params.id },
     })
 
     return NextResponse.json({ success: true })
+
   } catch (e: any) {
     if (e?.code === 'P2025') {
       return NextResponse.json(
