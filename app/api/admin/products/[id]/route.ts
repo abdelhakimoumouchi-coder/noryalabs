@@ -15,14 +15,16 @@ function ensureLocalUploads(images: unknown): string[] {
 // ─────────────────────────────
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const guard = requireAdmin(req)
   if (guard) return guard
 
+  const { id } = await params
+
   try {
     const product = await prisma.product.findUnique({
-      where: { id: params.id },
+      where: { id },
     })
 
     if (!product) {
@@ -47,10 +49,12 @@ export async function GET(
 // ─────────────────────────────
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const guard = requireAdmin(req)
   if (guard) return guard
+
+  const { id } = await params
 
   try {
     const body = await req.json()
@@ -65,7 +69,7 @@ export async function PATCH(
     }
 
     const updated = await prisma.product.update({
-      where: { id: params.id },
+      where: { id },
       data: payload,
     })
 
@@ -98,18 +102,20 @@ export async function PATCH(
 // ─────────────────────────────
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const guard = requireAdmin(req)
   if (guard) return guard
 
+  const { id } = await params
+
   try {
     await prisma.orderItem.deleteMany({
-      where: { productId: params.id },
+      where: { productId: id },
     })
 
     await prisma.product.delete({
-      where: { id: params.id },
+      where: { id },
     })
 
     return NextResponse.json({ success: true })

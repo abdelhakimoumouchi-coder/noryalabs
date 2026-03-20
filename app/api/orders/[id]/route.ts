@@ -17,12 +17,12 @@ const VALID_STATUSES: OrderStatus[] = [
 // ��────────────────────────────
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const guard = requireAdmin(req)
   if (guard) return guard
 
-  const orderId = params.id
+  const { id: orderId } = await params
   const body = await req.json()
   const status = body.status as OrderStatus
 
@@ -60,12 +60,12 @@ export async function PATCH(
 // ─────────────────────────────
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const guard = requireAdmin(req)
   if (guard) return guard
 
-  const orderId = params.id
+  const { id: orderId } = await params
 
   const order = await prisma.order.findUnique({
     where: { id: orderId },
