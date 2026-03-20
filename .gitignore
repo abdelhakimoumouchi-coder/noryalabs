@@ -21,6 +21,7 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 
 # local env files
 .env
@@ -36,3 +37,6 @@ node_modules/
 .next/
 
 public/uploads/
+# pnpm (no longer used)
+pnpm-lock.yaml
+pnpm-workspace.yaml
