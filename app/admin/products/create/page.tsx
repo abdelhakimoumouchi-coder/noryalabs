@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Upload, Trash2, X } from 'lucide-react';
+import { Trash2, X } from 'lucide-react';
 
 export default function CreateProduct() {
   const router = useRouter();
@@ -14,9 +14,9 @@ export default function CreateProduct() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // ✅ MULTI IMAGES
-  const [images, setImages] = useState<File[]>([]);
-  const [previews, setPreviews] = useState<string[]>([]);
+  // ✅ MULTI IMAGES via URL
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [urlInput, setUrlInput] = useState('');
 
   const [formData, setFormData] = useState({
     name: '',
@@ -81,39 +81,28 @@ export default function CreateProduct() {
     }));
   };
 
-  // ✅ Fix multi-image (robuste, Strict Mode friendly)
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const fileList = e.target.files;
-    if (!fileList || fileList.length === 0) return;
-
-    // Copie immédiate avant recyclage de l'event
-    const files = Array.from(fileList).filter(file => file.type.startsWith('image/'));
-    if (files.length === 0) {
-      e.target.value = '';
+  // ✅ Add image URL
+  const handleAddUrl = () => {
+    const trimmed = urlInput.trim();
+    if (!trimmed) return;
+    let parsed: URL;
+    try {
+      parsed = new URL(trimmed);
+    } catch {
+      setError('URL invalide');
       return;
     }
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+      setError('URL invalide : seuls les protocoles http et https sont acceptés');
+      return;
+    }
+    setImageUrls(prev => [...prev, trimmed]);
+    setUrlInput('');
+    setError(null);
+  };
 
-    // Autorise la re-sélection du même fichier
-    e.target.value = '';
-
-    Promise.all(
-      files.map(
-        file =>
-          new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result as string);
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-          })
-      )
-    )
-      .then(newPrev => {
-        setImages(prev => [...prev, ...files]);
-        setPreviews(prev => [...prev, ...newPrev]);
-      })
-      .catch(() => {
-        // Optionnel: gestion d'erreur de lecture
-      });
+  const handleUrlKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') { e.preventDefault(); handleAddUrl(); }
   };
 
   const generateSlug = (name: string) =>
@@ -128,28 +117,6 @@ export default function CreateProduct() {
     setError(null);
 
     try {
-      const imageUrls: string[] = [];
-
-      for (const img of images) {
-        const fd = new FormData();
-        fd.append('file', img);
-
-        const uploadRes = await fetch('/api/admin/upload', {
-          method: 'POST',
-          body: fd,
-        });
-
-        if (!uploadRes.ok) throw new Error('Erreur upload image');
-
-        const uploadData = await uploadRes.json();
-
-        if (Array.isArray(uploadData.urls)) {
-          imageUrls.push(...uploadData.urls);
-        } else if (typeof uploadData.urls === 'string') {
-          imageUrls.push(uploadData.urls);
-        }
-      }
-
       const payload = {
         name: formData.name,
         slug: generateSlug(formData.name),
@@ -296,27 +263,29 @@ export default function CreateProduct() {
 
         </div>
 
-        {/* MULTI IMAGE */}
-        <div className="bg-[#111827] border border-[#d4af37]/20 rounded-2xl p-6">
-          <label
-            htmlFor="product-images"
-            className="flex flex-col items-center justify-center h-40 border-2 border-dashed border-[#d4af37]/40 rounded-xl cursor-pointer transition hover:border-[#d4af37] hover:bg-white/5"
-          >
-            <Upload className="w-8 h-8 text-[#d4af37] mb-2" />
-            <span className="text-sm text-gray-300">Ajouter image(s)</span>
+        {/* MULTI IMAGE via URL */}
+        <div className="bg-[#111827] border border-[#d4af37]/20 rounded-2xl p-6 space-y-4">
+          <div className="flex gap-2">
             <input
-              id="product-images"
-              type="file"
-              multiple
-              accept="image/*"
-              onChange={handleImageChange}
-              className="hidden"
+              type="text"
+              value={urlInput}
+              onChange={(e) => setUrlInput(e.target.value)}
+              onKeyDown={handleUrlKeyDown}
+              placeholder="Entrer l'URL de l'image (Cloudinary, etc.)"
+              className="flex-1 px-4 py-3 bg-[#0f172a] border border-white/10 rounded-xl text-white"
             />
-          </label>
+            <button
+              type="button"
+              onClick={handleAddUrl}
+              className="px-4 py-3 bg-[#d4af37] text-[#0b1220] font-bold rounded-xl"
+            >
+              Ajouter
+            </button>
+          </div>
 
-          {previews.length > 0 && (
+          {imageUrls.length > 0 && (
             <div className="mt-4 flex gap-4 flex-wrap">
-              {previews.map((src, index) => (
+              {imageUrls.map((src, index) => (
                 <div key={index} className="relative w-32 h-32">
                   <img
                     src={src}
@@ -325,10 +294,7 @@ export default function CreateProduct() {
                   />
                   <button
                     type="button"
-                    onClick={() => {
-                      setImages(prev => prev.filter((_, i) => i !== index));
-                      setPreviews(prev => prev.filter((_, i) => i !== index));
-                    }}
+                    onClick={() => setImageUrls(prev => prev.filter((_, i) => i !== index))}
                     className="absolute top-2 right-2 bg-red-600 p-1 rounded-full"
                     aria-label="Supprimer cette image"
                   >

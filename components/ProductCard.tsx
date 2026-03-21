@@ -11,8 +11,8 @@ const FALLBACK_IMG = '/placeholder.jpg'
 
 const pickLocalImage = (images: string[]) => {
   if (!Array.isArray(images)) return FALLBACK_IMG
-  const local = images.find((src) => src.startsWith('/uploads/'))
-  return local || FALLBACK_IMG
+  const img = images.find((src) => typeof src === 'string' && src.length > 0)
+  return img || FALLBACK_IMG
 }
 
 export default function ProductCard({ product }: { product: Product }) {

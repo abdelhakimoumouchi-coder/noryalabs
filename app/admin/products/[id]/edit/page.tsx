@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Upload, Trash2, X } from 'lucide-react';
+import { Trash2, X } from 'lucide-react';
 
 export default function EditProduct() {
   const router = useRouter();
@@ -17,8 +17,8 @@ export default function EditProduct() {
   const [error, setError] = useState<string | null>(null);
 
   const [existingImages, setExistingImages] = useState<string[]>([]);
-  const [newImages, setNewImages] = useState<File[]>([]);
-  const [newPreviews, setNewPreviews] = useState<string[]>([]);
+  const [newUrls, setNewUrls] = useState<string[]>([]);
+  const [urlInput, setUrlInput] = useState('');
 
   const [formData, setFormData] = useState({
     name: '',
@@ -107,48 +107,36 @@ export default function EditProduct() {
     }
   };
 
-  // 🔹 Add new images (robuste, compatible Strict Mode)
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const fileList = e.target.files;
-    if (!fileList || fileList.length === 0) return;
-
-    // Copie immédiate avant recyclage de l'event
-    const files = Array.from(fileList).filter(file => file.type.startsWith('image/'));
-    if (files.length === 0) {
-      e.target.value = '';
+  // 🔹 Add new image URL
+  const handleAddUrl = () => {
+    const trimmed = urlInput.trim();
+    if (!trimmed) return;
+    let parsed: URL;
+    try {
+      parsed = new URL(trimmed);
+    } catch {
+      setError('URL invalide');
       return;
     }
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+      setError('URL invalide : seuls les protocoles http et https sont acceptés');
+      return;
+    }
+    setNewUrls(prev => [...prev, trimmed]);
+    setUrlInput('');
+    setError(null);
+  };
 
-    // Permet de re-sélectionner la même image (Strict Mode)
-    e.target.value = '';
-
-    Promise.all(
-      files.map(
-        file =>
-          new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result as string);
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-          })
-      )
-    )
-      .then(previews => {
-        setNewImages(prev => [...prev, ...files]);
-        setNewPreviews(prev => [...prev, ...previews]);
-      })
-      .catch(() => {
-        // Optionnel: gérer une erreur de lecture
-      });
+  const handleUrlKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') { e.preventDefault(); handleAddUrl(); }
   };
 
   const removeExistingImage = (index: number) => {
     setExistingImages(prev => prev.filter((_, i) => i !== index));
   };
 
-  const removeNewImage = (index: number) => {
-    setNewImages(prev => prev.filter((_, i) => i !== index));
-    setNewPreviews(prev => prev.filter((_, i) => i !== index));
+  const removeNewUrl = (index: number) => {
+    setNewUrls(prev => prev.filter((_, i) => i !== index));
   };
 
   const generateSlug = (name: string) =>
@@ -165,28 +153,7 @@ export default function EditProduct() {
     setError(null);
 
     try {
-      const uploadedUrls: string[] = [];
-
-      // 🔹 Upload nouvelles images
-      for (const img of newImages) {
-        const fd = new FormData();
-        fd.append('file', img);
-
-        const uploadRes = await fetch('/api/admin/upload', {
-          method: 'POST',
-          body: fd,
-        });
-
-        if (!uploadRes.ok) throw new Error('Erreur upload image');
-
-        const uploadData = await uploadRes.json();
-
-        if (Array.isArray(uploadData.urls)) {
-          uploadedUrls.push(...uploadData.urls);
-        }
-      }
-
-      const finalImages = [...existingImages, ...uploadedUrls];
+      const finalImages = [...existingImages, ...newUrls];
 
       const payload = {
         name: formData.name,
@@ -344,27 +311,29 @@ export default function EditProduct() {
           </div>
         )}
 
-        {/* Bloc upload et previews */}
+        {/* Bloc URL image et previews */}
         <div className="space-y-4">
-          <label
-            htmlFor="product-images"
-            className="flex flex-col items-center justify-center h-40 border-2 border-dashed rounded-xl cursor-pointer transition hover:border-[#d4af37] hover:bg-white/5"
-          >
-            <Upload className="w-8 h-8 mb-2 text-[#d4af37]" />
-            <span className="text-sm text-white/80">Ajouter image(s)</span>
+          <div className="flex gap-2">
             <input
-              id="product-images"
-              type="file"
-              multiple
-              accept="image/*"
-              onChange={handleImageChange}
-              className="hidden"
+              type="text"
+              value={urlInput}
+              onChange={(e) => setUrlInput(e.target.value)}
+              onKeyDown={handleUrlKeyDown}
+              placeholder="Entrer l'URL de l'image (Cloudinary, etc.)"
+              className="flex-1 px-4 py-3 bg-[#0f172a] border border-white/10 rounded-xl text-white"
             />
-          </label>
+            <button
+              type="button"
+              onClick={handleAddUrl}
+              className="px-4 py-3 bg-[#d4af37] text-[#0b1220] font-bold rounded-xl"
+            >
+              Ajouter
+            </button>
+          </div>
 
-          {newPreviews.length > 0 && (
+          {newUrls.length > 0 && (
             <div className="flex gap-4 flex-wrap">
-              {newPreviews.map((src, i) => (
+              {newUrls.map((src, i) => (
                 <div key={i} className="relative w-32 h-32">
                   <img
                     src={src}
@@ -373,7 +342,7 @@ export default function EditProduct() {
                   />
                   <button
                     type="button"
-                    onClick={() => removeNewImage(i)}
+                    onClick={() => removeNewUrl(i)}
                     className="absolute top-2 right-2 bg-red-600 p-1 rounded-full text-white shadow"
                     aria-label="Supprimer cette image"
                   >

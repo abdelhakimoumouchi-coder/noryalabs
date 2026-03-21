@@ -1,57 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server'
-import path from 'path'
-import { promises as fs } from 'fs'
 import { requireAdmin } from '../_auth'
-
-export const runtime = 'nodejs' // force le runtime node
-
-const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads')
 
 export async function POST(req: NextRequest) {
   const guard = requireAdmin(req)
   if (guard) return guard
 
   try {
-    const formData = await req.formData()
-    const files = [
-      ...formData.getAll('files'),
-      ...formData.getAll('file'),
-    ]
+    const body = await req.json()
+    const rawUrls: unknown[] = Array.isArray(body.urls)
+      ? body.urls
+      : body.url
+        ? [body.url]
+        : []
 
-    if (!files || files.length === 0) {
-      return NextResponse.json({ error: 'No files' }, { status: 400 })
+    if (rawUrls.length === 0) {
+      return NextResponse.json({ error: 'No URLs provided' }, { status: 400 })
     }
 
-    await fs.mkdir(UPLOAD_DIR, { recursive: true })
-
-    const saved: string[] = []
-
-    for (const file of files) {
-      // file peut être string ou Blob/File
-      if (!file || typeof file === 'string' || typeof (file as any).arrayBuffer !== 'function') continue
-
-      const blob = file as Blob
-      const arrayBuffer = await blob.arrayBuffer()
-      const buffer = Buffer.from(arrayBuffer)
-
-      const originalName = (blob as any).name || 'file'
-      const safeName = String(originalName).replace(/[^a-zA-Z0-9._-]/g, '_')
-      const fileName = `${Date.now()}_${safeName || 'upload'}`
-      const filePath = path.join(UPLOAD_DIR, fileName)
-
-      await fs.writeFile(filePath, buffer)
-      saved.push(`/uploads/${fileName}`)
+    const validated: string[] = []
+    for (const u of rawUrls) {
+      if (typeof u !== 'string') {
+        return NextResponse.json({ error: 'Invalid URL value' }, { status: 400 })
+      }
+      let parsed: URL
+      try {
+        parsed = new URL(u)
+      } catch {
+        return NextResponse.json({ error: `Invalid URL: ${u}` }, { status: 400 })
+      }
+      if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+        return NextResponse.json({ error: `Unsupported URL protocol: ${u}` }, { status: 400 })
+      }
+      validated.push(u)
     }
 
-    if (saved.length === 0) {
-      return NextResponse.json({ error: 'No valid files' }, { status: 400 })
-    }
-
-    return NextResponse.json({ urls: saved }, { status: 201 })
+    return NextResponse.json({ urls: validated }, { status: 201 })
   } catch (e: any) {
     console.error('Upload error:', e)
     return NextResponse.json(
-      { error: 'Failed to upload', details: e?.message },
+      { error: 'Failed to process', details: e?.message },
       { status: 500 }
     )
   }
