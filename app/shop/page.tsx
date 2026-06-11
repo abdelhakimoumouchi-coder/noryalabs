@@ -28,6 +28,7 @@ function ShopContent() {
     subcategory: '',
     priceMin: '',
     priceMax: '',
+    promotion: false,
     sort: 'createdAt',
   })
 
@@ -65,6 +66,7 @@ function ShopContent() {
         ...(filters.subcategory && { subcategory: filters.subcategory }),
         ...(filters.priceMin && { priceMin: filters.priceMin }),
         ...(filters.priceMax && { priceMax: filters.priceMax }),
+        ...(filters.promotion && { promotion: 'true' }),
         sort: filters.sort,
       })
 
@@ -90,7 +92,7 @@ function ShopContent() {
   }, [fetchProducts])
 
   const resetFilters = () => {
-    setFilters({ category: '', subcategory: '', priceMin: '', priceMax: '', sort: 'createdAt' })
+    setFilters({ category: '', subcategory: '', priceMin: '', priceMax: '', promotion: false, sort: 'createdAt' })
     setPagination((p) => ({ ...p, page: 1 }))
     setSubcategories([])
   }
@@ -105,6 +107,7 @@ function ShopContent() {
     filters.subcategory,
     filters.priceMin,
     filters.priceMax,
+    filters.promotion ? 'promotion' : '',
   ].filter(Boolean).length
 
   return (
@@ -190,6 +193,16 @@ function ShopContent() {
                 />
               </div>
             </div>
+
+            <label className="mb-6 flex items-center gap-3 text-sm font-medium cursor-pointer">
+              <input
+                type="checkbox"
+                checked={filters.promotion}
+                onChange={(e) => setFilterAndResetPage({ promotion: e.target.checked })}
+                className="h-4 w-4 accent-olive"
+              />
+              Produits en promotion
+            </label>
 
             <div className="mb-6">
               <label className="block text-sm font-medium mb-2">Trier par</label>

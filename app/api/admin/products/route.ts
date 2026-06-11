@@ -73,6 +73,7 @@ export async function POST(req: NextRequest) {
         name: body.name,
         slug,
         priceDa: Number(body.priceDa),
+        oldPriceDa: body.oldPriceDa ? Number(body.oldPriceDa) : null,
         category: body.category,
         subcategoryId: body.subcategoryId || null,
         description: body.description || '',

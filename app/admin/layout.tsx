@@ -13,15 +13,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="min-h-screen bg-[#0b1220] text-white flex">
+    <div className="min-h-screen bg-[#0b1220] text-white flex flex-col lg:flex-row">
       
       {/* Sidebar */}
-      <aside className="w-64 bg-[#111827] border-r border-[#d4af37]/20 p-6 flex flex-col">
-        <h2 className="text-xl font-black text-[#d4af37] mb-10">
+      <aside className="w-full lg:w-64 bg-[#111827] border-b lg:border-b-0 lg:border-r border-[#d4af37]/20 p-4 lg:p-6 flex flex-col lg:min-h-screen">
+        <h2 className="text-lg lg:text-xl font-black text-[#d4af37] mb-4 lg:mb-10">
           Store Dz Admin
         </h2>
 
-        <nav className="flex flex-col gap-5 text-sm">
+        <nav className="flex flex-wrap lg:flex-col gap-3 lg:gap-5 text-sm">
           <Link href="/admin" className="flex items-center gap-3 hover:text-[#d4af37] transition">
             <LayoutDashboard size={18} /> Dashboard
           </Link>
@@ -37,14 +37,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         <button
           onClick={logout}
-          className="mt-auto flex items-center gap-3 text-red-400 hover:text-red-500 transition"
+          className="mt-4 lg:mt-auto flex items-center gap-3 text-red-400 hover:text-red-500 transition"
         >
           <LogOut size={18} /> Déconnexion
         </button>
       </aside>
 
       {/* Content */}
-      <main className="flex-1 p-10">{children}</main>
+      <main className="flex-1 p-4 sm:p-6 lg:p-10 overflow-x-hidden">{children}</main>
     </div>
   )
 }

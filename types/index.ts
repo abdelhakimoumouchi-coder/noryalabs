@@ -13,6 +13,7 @@ export interface Product {
   slug: string
   name: string
   priceDa: number
+  oldPriceDa?: number | null
   category: string
   subcategoryId?: string | null
   subcategory?: Subcategory | null

@@ -28,9 +28,11 @@ export default function EditProduct() {
     subcategoryId: '',
     description: '',
     priceDa: '',
+    oldPriceDa: '',
     stock: '0',
     colors: '',
     isFeatured: false,
+    promotion: false,
   });
 
   // 🔹 Fetch product
@@ -46,9 +48,11 @@ export default function EditProduct() {
           subcategoryId: product.subcategoryId || '',
           description: product.description || '',
           priceDa: String(product.priceDa || ''),
+          oldPriceDa: product.oldPriceDa ? String(product.oldPriceDa) : '',
           stock: String(product.stock || 0),
           colors: product.colors?.join(', ') || '',
           isFeatured: product.isFeatured || false,
+          promotion: !!product.oldPriceDa,
         });
 
         // ✅ Fix image
@@ -190,6 +194,7 @@ export default function EditProduct() {
         name: formData.name,
         slug: generateSlug(formData.name),
         priceDa: parseInt(formData.priceDa),
+        oldPriceDa: formData.promotion && formData.oldPriceDa ? parseInt(formData.oldPriceDa) : null,
         category: formData.category,
         subcategoryId: formData.subcategoryId || undefined,
         description: formData.description,
@@ -296,22 +301,55 @@ export default function EditProduct() {
             className="w-full px-4 py-3 bg-[#0f172a] border rounded-xl text-white"
           />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="flex items-center gap-3">
             <input
-              type="number"
-              name="priceDa"
-              value={formData.priceDa}
+              type="checkbox"
+              name="promotion"
+              checked={formData.promotion}
               onChange={handleChange}
-              className="px-4 py-3 bg-[#0f172a] border rounded-xl text-white"
             />
+            <span className="text-white text-sm">
+              Promotion
+            </span>
+          </div>
 
-            <input
-              type="number"
-              name="stock"
-              value={formData.stock}
-              onChange={handleChange}
-              className="px-4 py-3 bg-[#0f172a] border rounded-xl text-white"
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {formData.promotion && (
+              <div>
+                <label className="block text-sm text-gray-300 mb-2">Ancien prix</label>
+                <input
+                  type="number"
+                  name="oldPriceDa"
+                  value={formData.oldPriceDa}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 bg-[#0f172a] border rounded-xl text-white"
+                />
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm text-gray-300 mb-2">
+                {formData.promotion ? 'Nouveau prix' : 'Prix'}
+              </label>
+              <input
+                type="number"
+                name="priceDa"
+                value={formData.priceDa}
+                onChange={handleChange}
+                className="w-full px-4 py-3 bg-[#0f172a] border rounded-xl text-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm text-gray-300 mb-2">Stock</label>
+              <input
+                type="number"
+                name="stock"
+                value={formData.stock}
+                onChange={handleChange}
+                className="w-full px-4 py-3 bg-[#0f172a] border rounded-xl text-white"
+              />
+            </div>
           </div>
 
           <input

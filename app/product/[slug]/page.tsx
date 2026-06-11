@@ -33,6 +33,7 @@ export default function ProductPage() {
 
   const handleAddToCart = () => {
     if (!product) return
+    if (product.stock <= 0) return
 
     const images = Array.isArray(product.images) ? product.images : []
     addItem({
@@ -65,6 +66,11 @@ export default function ProductPage() {
   const images = Array.isArray(product.images) ? product.images : []
   const benefits = Array.isArray(product.benefits) ? product.benefits : []
   const characteristics = Array.isArray(product.colors) ? product.colors : []
+  const isOutOfStock = product.stock <= 0
+  const hasPromotion = !!product.oldPriceDa && product.oldPriceDa > product.priceDa
+  const discountPercent = hasPromotion
+    ? Math.round(((product.oldPriceDa! - product.priceDa) / product.oldPriceDa!) * 100)
+    : 0
 
   return (
     <>
@@ -101,7 +107,17 @@ export default function ProductPage() {
               {product.category === 'skincare' ? 'Soin de la peau' : product.category === 'haircare' ? 'Soin des cheveux' : product.category}
             </p>
             <h1 className="font-heading text-3xl md:text-4xl font-bold mb-4 text-text">{product.name}</h1>
-            <p className="text-2xl font-bold text-accent mb-6">{formatPrice(product.priceDa)}</p>
+            <div className="mb-6">
+              {hasPromotion && (
+                <div className="flex items-center gap-3 mb-1">
+                  <p className="text-lg text-muted line-through">{formatPrice(product.oldPriceDa!)}</p>
+                  <span className="bg-red-600 text-white text-xs font-semibold px-2 py-1 rounded-full">
+                    -{discountPercent}%
+                  </span>
+                </div>
+              )}
+              <p className="text-2xl font-bold text-accent">{formatPrice(product.priceDa)}</p>
+            </div>
 
             {characteristics.length > 0 && (
               <div className="mb-4">
@@ -137,9 +153,16 @@ export default function ProductPage() {
             )}
 
             <div className="flex items-center gap-3 mb-4">
-              <p className="text-sm text-muted">{product.stock} en stock</p>
+              {isOutOfStock ? (
+                <span className="bg-red-600 text-white text-sm font-semibold px-3 py-1 rounded-full">
+                  Rupture de stock
+                </span>
+              ) : (
+                <p className="text-sm text-muted">{product.stock} en stock</p>
+              )}
             </div>
 
+            {!isOutOfStock && (
             <div className="flex items-center gap-3 mb-6">
               <div className="flex items-center gap-2 bg-card border border-border rounded-lg px-3 py-2">
                 <button
@@ -150,20 +173,22 @@ export default function ProductPage() {
                 </button>
                 <span className="w-10 text-center font-semibold text-text">{quantity}</span>
                 <button
-                  onClick={() => setQuantity((q) => q + 1)}
+                  onClick={() => setQuantity((q) => Math.min(product.stock, q + 1))}
                   className="w-8 h-8 rounded bg-surface text-text border border-border hover:border-accent hover:text-accent transition flex items-center justify-center font-semibold"
                 >
                   +
                 </button>
               </div>
             </div>
+            )}
 
             <div className="flex flex-col gap-3">
               <button
                 onClick={handleAddToCart}
-                className="w-full bg-accent text-background py-3 rounded-lg font-semibold hover:bg-accentDark transition"
+                disabled={isOutOfStock}
+                className="w-full bg-accent text-background py-3 rounded-lg font-semibold hover:bg-accentDark transition disabled:bg-gray-300 disabled:cursor-not-allowed"
               >
-                Ajouter au panier
+                {isOutOfStock ? 'Produit indisponible' : 'Ajouter au panier'}
               </button>
             </div>
           </div>

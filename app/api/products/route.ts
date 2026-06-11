@@ -38,6 +38,7 @@ export async function GET(request: NextRequest) {
     const subcategory = searchParams.get('subcategory')
     const priceMin = searchParams.get('priceMin')
     const priceMax = searchParams.get('priceMax')
+    const promotion = searchParams.get('promotion')
     const page = parseInt(searchParams.get('page') || '1')
     const pageSize = parseInt(searchParams.get('pageSize') || '12')
     const sort = searchParams.get('sort') || 'createdAt'
@@ -59,6 +60,10 @@ export async function GET(request: NextRequest) {
 
       if (priceMin) where.priceDa.gte = parseInt(priceMin)
       if (priceMax) where.priceDa.lte = parseInt(priceMax)
+    }
+
+    if (promotion === 'true') {
+      where.oldPriceDa = { not: null }
     }
 
     const orderBy: any = {}
@@ -85,6 +90,8 @@ export async function GET(request: NextRequest) {
 
       return {
         ...p,
+        oldPriceDa:
+          p.oldPriceDa && p.oldPriceDa > p.priceDa ? p.oldPriceDa : null,
         images: imgs.length > 0 ? imgs : ['/placeholder.png'], // 🔥 fallback
       }
     })

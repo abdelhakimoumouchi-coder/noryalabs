@@ -12,6 +12,7 @@ model Product {
   slug           String       @unique
   name           String
   priceDa        Int
+  oldPriceDa     Int?
   category       String
   subcategoryId  String?
   subcategory    Subcategory? @relation(fields: [subcategoryId], references: [id])

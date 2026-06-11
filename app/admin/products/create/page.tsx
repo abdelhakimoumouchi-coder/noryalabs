@@ -26,9 +26,11 @@ export default function CreateProduct() {
     subcategoryId: '',
     description: '',
     priceDa: '',
+    oldPriceDa: '',
     stock: '0',
     colors: '',
     featured: false,
+    promotion: false,
   });
 
   // Fetch categories
@@ -152,6 +154,7 @@ export default function CreateProduct() {
         name: formData.name,
         slug: generateSlug(formData.name),
         priceDa: parseInt(formData.priceDa),
+        oldPriceDa: formData.promotion && formData.oldPriceDa ? parseInt(formData.oldPriceDa) : null,
         category: formData.category,
         subcategoryId: formData.subcategoryId || null,
         description: formData.description,
@@ -246,25 +249,64 @@ export default function CreateProduct() {
             className="w-full px-4 py-3 bg-[#0f172a] border border-white/10 rounded-xl text-white"
           />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="flex items-center gap-3">
             <input
-              type="number"
-              name="priceDa"
-              placeholder="Prix (DA)"
-              value={formData.priceDa}
-              onChange={handleChange}
-              required
-              className="px-4 py-3 bg-[#0f172a] border border-white/10 rounded-xl text-white"
+              type="checkbox"
+              checked={formData.promotion}
+              onChange={(e) =>
+                setFormData(prev => ({
+                  ...prev,
+                  promotion: e.target.checked,
+                  oldPriceDa: e.target.checked ? prev.oldPriceDa : '',
+                }))
+              }
             />
+            <span className="text-white text-sm">
+              Promotion
+            </span>
+          </div>
 
-            <input
-              type="number"
-              name="stock"
-              placeholder="Stock"
-              value={formData.stock}
-              onChange={handleChange}
-              className="px-4 py-3 bg-[#0f172a] border border-white/10 rounded-xl text-white"
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {formData.promotion && (
+              <div>
+                <label className="block text-sm text-gray-300 mb-2">Ancien prix</label>
+                <input
+                  type="number"
+                  name="oldPriceDa"
+                  placeholder="Ancien prix (DA)"
+                  value={formData.oldPriceDa}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 bg-[#0f172a] border border-white/10 rounded-xl text-white"
+                />
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm text-gray-300 mb-2">
+                {formData.promotion ? 'Nouveau prix' : 'Prix'}
+              </label>
+              <input
+                type="number"
+                name="priceDa"
+                placeholder={formData.promotion ? 'Nouveau prix (DA)' : 'Prix (DA)'}
+                value={formData.priceDa}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-3 bg-[#0f172a] border border-white/10 rounded-xl text-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm text-gray-300 mb-2">Stock</label>
+              <input
+                type="number"
+                name="stock"
+                placeholder="Nombre en stock"
+                value={formData.stock}
+                onChange={handleChange}
+                className="w-full px-4 py-3 bg-[#0f172a] border border-white/10 rounded-xl text-white"
+              />
+            </div>
           </div>
 
           <input

@@ -52,13 +52,14 @@ export const adminProductSchema = z.object({
   name: z.string().min(2),
 
   priceDa: z.number().int().min(0),
+  oldPriceDa: z.number().int().min(0).nullable().optional(),
 
   category: z.string().min(1),
 
   // accepte null
   subcategoryId: z.string().nullable().optional(),
 
-  description: z.string().min(10),
+  description: z.string(),
 
   // multi images obligatoires
   images: z.array(imageStringSchema).min(1),

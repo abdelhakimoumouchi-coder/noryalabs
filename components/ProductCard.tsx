@@ -19,6 +19,11 @@ export default function ProductCard({ product }: { product: Product }) {
   const router = useRouter()
 
   const mainImage = pickLocalImage(product.images || [])
+  const isOutOfStock = product.stock <= 0
+  const hasPromotion = !!product.oldPriceDa && product.oldPriceDa > product.priceDa
+  const discountPercent = hasPromotion
+    ? Math.round(((product.oldPriceDa! - product.priceDa) / product.oldPriceDa!) * 100)
+    : 0
 
   const categoryLabel =
     product.category === 'skincare'
@@ -30,6 +35,7 @@ export default function ProductCard({ product }: { product: Product }) {
   const href = product.slug ? `/product/${product.slug}` : '/shop'
 
   const handleAddToCart = () => {
+    if (isOutOfStock) return
     addItem({
       productId: product.id,
       name: product.name,
@@ -41,6 +47,7 @@ export default function ProductCard({ product }: { product: Product }) {
   }
 
   const handleBuyNow = () => {
+    if (isOutOfStock) return
     handleAddToCart()
     router.push('/checkout')
   }
@@ -64,6 +71,16 @@ export default function ProductCard({ product }: { product: Product }) {
               Coup de cœur
             </span>
           )}
+          {isOutOfStock && (
+            <span className="absolute bottom-2 left-2 bg-red-600 text-white text-[10px] sm:text-xs font-semibold px-2 sm:px-3 py-1 rounded-full shadow-soft">
+              Rupture de stock
+            </span>
+          )}
+          {hasPromotion && !isOutOfStock && (
+            <span className="absolute bottom-2 left-2 bg-red-600 text-white text-[10px] sm:text-xs font-semibold px-2 sm:px-3 py-1 rounded-full shadow-soft">
+              -{discountPercent}%
+            </span>
+          )}
         </div>
       </Link>
 
@@ -72,35 +89,44 @@ export default function ProductCard({ product }: { product: Product }) {
         <h3 className="font-heading text-sm sm:text-lg font-semibold text-text line-clamp-2 leading-snug">
           {product.name}
         </h3>
-        <p className="text-base sm:text-xl font-bold text-accent">{formatPrice(product.priceDa)}</p>
+        <div>
+          {hasPromotion && (
+            <p className="text-xs sm:text-sm text-muted line-through">{formatPrice(product.oldPriceDa!)}</p>
+          )}
+          <p className="text-base sm:text-xl font-bold text-accent">{formatPrice(product.priceDa)}</p>
+        </div>
 
         <div className="space-y-2">
           <div className="hidden md:flex flex-col gap-2 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition duration-200">
             <button
               onClick={handleAddToCart}
+              disabled={isOutOfStock}
               className="w-full px-3 py-2 text-sm rounded-lg border border-border text-text hover:border-accent hover:text-accent transition"
             >
-              Ajouter au panier
+              {isOutOfStock ? 'Indisponible' : 'Ajouter au panier'}
             </button>
             <button
               onClick={handleBuyNow}
+              disabled={isOutOfStock}
               className="w-full px-3 py-2 text-sm rounded-lg bg-accent text-background hover:bg-accentDark transition"
             >
-              Acheter maintenant
+              {isOutOfStock ? 'Rupture de stock' : 'Acheter maintenant'}
             </button>
           </div>
           <div className="flex md:hidden flex-col gap-1.5">
             <button
               onClick={handleAddToCart}
+              disabled={isOutOfStock}
               className="w-full px-2 py-1.5 text-[11px] rounded-lg border border-border text-text hover:border-accent hover:text-accent transition"
             >
-              Ajouter
+              {isOutOfStock ? 'Indispo' : 'Ajouter'}
             </button>
             <button
               onClick={handleBuyNow}
+              disabled={isOutOfStock}
               className="w-full px-2 py-1.5 text-[11px] rounded-lg bg-accent text-background hover:bg-accentDark transition"
             >
-              Acheter
+              {isOutOfStock ? 'Rupture' : 'Acheter'}
             </button>
           </div>
         </div>
