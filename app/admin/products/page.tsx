@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { Plus, Pencil, Trash2, Search, Folder, LayoutDashboard } from 'lucide-react';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 export default function AdminProducts() {
@@ -93,12 +92,14 @@ export default function AdminProducts() {
                   >
                     <td className="px-4 py-3 flex items-center gap-3">
                       <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-[#0f172a]">
-                        <Image
+                        <img
                           src={product.images?.[0] || '/placeholder.jpg'}
                           alt={product.name}
-                          fill
-                          className="object-cover"
-                          sizes="40px"
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            const img = e.target as HTMLImageElement;
+                            img.src = '/placeholder.jpg';
+                          }}
                         />
                       </div>
                       <span className="text-white">{product.name}</span>

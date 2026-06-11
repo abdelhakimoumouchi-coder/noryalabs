@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
-import Image from 'next/image'
 import { useCart } from '@/contexts/CartContext'
 import { formatPrice } from '@/lib/utils'
 import { useToast } from '@/components/Toast'
@@ -74,11 +73,10 @@ export default function ProductPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           <div>
             <div className="relative aspect-square mb-4 rounded-xl overflow-hidden bg-surface border border-border">
-              <Image
+              <img
                 src={images[selectedImage] || '/placeholder.jpg'}
                 alt={product.name}
-                fill
-                className="object-cover"
+                className="absolute inset-0 w-full h-full object-cover"
               />
             </div>
             {images.length > 1 && (
@@ -91,7 +89,7 @@ export default function ProductPage() {
                       selectedImage === idx ? 'border-accent' : 'border-border'
                     }`}
                   >
-                    <Image src={img} alt={`${product.name} ${idx + 1}`} fill className="object-cover" />
+                    <img src={img} alt={`${product.name} ${idx + 1}`} className="absolute inset-0 w-full h-full object-cover" />
                   </button>
                 ))}
               </div>

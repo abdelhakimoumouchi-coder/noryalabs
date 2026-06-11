@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Trash2, X } from 'lucide-react';
+import { ImagePlus, Trash2, X } from 'lucide-react';
+import { compressProductImage } from '@/lib/clientImageCompression';
 
 export default function CreateProduct() {
   const router = useRouter();
@@ -12,6 +13,7 @@ export default function CreateProduct() {
   const [filteredSubcats, setFilteredSubcats] = useState<any[]>([]);
 
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // ✅ MULTI IMAGES via URL
@@ -103,6 +105,35 @@ export default function CreateProduct() {
 
   const handleUrlKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') { e.preventDefault(); handleAddUrl(); }
+  };
+
+  const handleUploadFiles = async (files: FileList | null) => {
+    if (!files?.length) return;
+
+    setUploading(true);
+    setError(null);
+
+    try {
+      const form = new FormData();
+      for (const file of Array.from(files)) {
+        const compressed = await compressProductImage(file);
+        form.append('files', compressed);
+      }
+
+      const response = await fetch('/api/admin/upload', {
+        method: 'POST',
+        body: form,
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data?.error || 'Erreur upload image');
+
+      setImageUrls(prev => [...prev, ...(Array.isArray(data.urls) ? data.urls : [])]);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setUploading(false);
+    }
   };
 
   const generateSlug = (name: string) =>
@@ -215,7 +246,7 @@ export default function CreateProduct() {
             className="w-full px-4 py-3 bg-[#0f172a] border border-white/10 rounded-xl text-white"
           />
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <input
               type="number"
               name="priceDa"
@@ -263,8 +294,26 @@ export default function CreateProduct() {
 
         </div>
 
-        {/* MULTI IMAGE via URL */}
+        {/* MULTI IMAGE via upload ou URL */}
         <div className="bg-[#111827] border border-[#d4af37]/20 rounded-2xl p-6 space-y-4">
+          <label className="flex flex-col items-center justify-center gap-3 border border-dashed border-[#d4af37]/40 rounded-2xl p-6 bg-[#0f172a] text-center cursor-pointer hover:border-[#d4af37] transition">
+            <ImagePlus className="text-[#d4af37]" size={28} />
+            <span className="text-white font-semibold">
+              {uploading ? 'Compression et upload...' : 'Uploader des images produit'}
+            </span>
+            <span className="text-gray-400 text-sm">
+              JPG, PNG ou WEBP compressés automatiquement
+            </span>
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              multiple
+              disabled={uploading}
+              onChange={(e) => handleUploadFiles(e.target.files)}
+              className="hidden"
+            />
+          </label>
+
           <div className="flex gap-2">
             <input
               type="text"
@@ -277,7 +326,8 @@ export default function CreateProduct() {
             <button
               type="button"
               onClick={handleAddUrl}
-              className="px-4 py-3 bg-[#d4af37] text-[#0b1220] font-bold rounded-xl"
+              className="px-4 py-3 bg-[#d4af37] text-[#0b1220] font-bold rounded-xl disabled:opacity-60"
+              disabled={uploading}
             >
               Ajouter
             </button>
@@ -306,7 +356,7 @@ export default function CreateProduct() {
           )}
         </div>
 
-        <div className="flex gap-4 justify-end">
+        <div className="sticky bottom-0 z-10 flex gap-4 justify-end bg-[#0b1220]/95 py-4">
           <button
             type="button"
             onClick={() => router.push('/admin/products')}

@@ -71,6 +71,7 @@ export const adminProductSchema = z.object({
 
   // correspond à ton frontend (featured)
   featured: z.boolean().optional(),
+  isFeatured: z.boolean().optional(),
 
   slug: z.string().min(1).optional(),
 })

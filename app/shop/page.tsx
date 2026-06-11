@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { Filter, X } from 'lucide-react'
 import ProductCard from '@/components/ProductCard'
 import { Product, PaginationInfo, Category, Subcategory } from '@/types'
 
@@ -15,6 +16,7 @@ function ShopContent() {
   const [subcategories, setSubcategories] = useState<Subcategory[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const [pagination, setPagination] = useState<PaginationInfo>({
     page: 1,
     totalPages: 1,
@@ -98,14 +100,42 @@ function ShopContent() {
     setPagination((p) => ({ ...p, page: 1 }))
   }
 
-  return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <h1 className="font-heading text-4xl font-bold mb-8">Notre Boutique</h1>
+  const activeFiltersCount = [
+    filters.category,
+    filters.subcategory,
+    filters.priceMin,
+    filters.priceMax,
+  ].filter(Boolean).length
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        <aside className="lg:col-span-1">
+  return (
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-8 sm:py-12">
+      <div className="flex items-center justify-between gap-3 mb-6 sm:mb-8">
+        <h1 className="font-heading text-3xl sm:text-4xl font-bold">Notre Boutique</h1>
+        <button
+          type="button"
+          onClick={() => setFiltersOpen((open) => !open)}
+          className="lg:hidden inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-background font-semibold shadow-sm"
+          aria-expanded={filtersOpen}
+        >
+          {filtersOpen ? <X size={16} /> : <Filter size={16} />}
+          Filtres{activeFiltersCount > 0 ? ` (${activeFiltersCount})` : ''}
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-5 lg:gap-8">
+        <aside className={`${filtersOpen ? 'block' : 'hidden'} lg:block lg:col-span-1`}>
           <div className="bg-surface p-6 rounded-xl shadow-sm sticky top-24 border border-border">
-            <h2 className="font-heading text-xl font-semibold mb-4">Filtres</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-heading text-xl font-semibold">Filtres</h2>
+              <button
+                type="button"
+                onClick={() => setFiltersOpen(false)}
+                className="lg:hidden text-muted hover:text-text"
+                aria-label="Fermer les filtres"
+              >
+                <X size={18} />
+              </button>
+            </div>
 
             <div className="mb-6">
               <label className="block text-sm font-medium mb-2">Catégorie</label>
@@ -176,7 +206,10 @@ function ShopContent() {
             </div>
 
             <button
-              onClick={resetFilters}
+              onClick={() => {
+                resetFilters()
+                setFiltersOpen(false)
+              }}
               className="w-full px-4 py-2 text-sm text-accent border border-accent rounded-lg hover:bg-accent hover:text-background transition-colors"
             >
               Réinitialiser
@@ -193,7 +226,7 @@ function ShopContent() {
             <div className="text-center py-20 text-red-600">{error}</div>
           ) : (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 mb-8">
                 {products.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}

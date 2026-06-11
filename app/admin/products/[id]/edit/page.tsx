@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Trash2, X } from 'lucide-react';
+import { ArrowLeft, ImagePlus, Trash2, X } from 'lucide-react';
+import { compressProductImage } from '@/lib/clientImageCompression';
 
 export default function EditProduct() {
   const router = useRouter();
@@ -14,6 +15,7 @@ export default function EditProduct() {
   const [filteredSubcats, setFilteredSubcats] = useState<any[]>([]);
 
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [existingImages, setExistingImages] = useState<string[]>([]);
@@ -139,6 +141,35 @@ export default function EditProduct() {
     setNewUrls(prev => prev.filter((_, i) => i !== index));
   };
 
+  const handleUploadFiles = async (files: FileList | null) => {
+    if (!files?.length) return;
+
+    setUploading(true);
+    setError(null);
+
+    try {
+      const form = new FormData();
+      for (const file of Array.from(files)) {
+        const compressed = await compressProductImage(file);
+        form.append('files', compressed);
+      }
+
+      const response = await fetch('/api/admin/upload', {
+        method: 'POST',
+        body: form,
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data?.error || 'Erreur upload image');
+
+      setNewUrls(prev => [...prev, ...(Array.isArray(data.urls) ? data.urls : [])]);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const generateSlug = (name: string) =>
     name
       .toLowerCase()
@@ -194,9 +225,21 @@ export default function EditProduct() {
 
   return (
     <div>
-      <h1 className="text-3xl font-black text-white mb-8">
-        Modifier produit
-      </h1>
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+        <div>
+          <button
+            type="button"
+            onClick={() => router.push('/admin/products')}
+            className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-[#d4af37] mb-3"
+          >
+            <ArrowLeft size={16} />
+            Retour aux produits
+          </button>
+          <h1 className="text-3xl font-black text-white">
+            Modifier produit
+          </h1>
+        </div>
+      </div>
 
       {error && (
         <div className="mb-6 bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl">
@@ -204,7 +247,7 @@ export default function EditProduct() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-6 max-w-3xl">
+      <form onSubmit={handleSubmit} className="space-y-6 max-w-5xl">
 
         <div className="bg-[#111827] border border-[#d4af37]/20 rounded-2xl p-6 space-y-4">
 
@@ -253,7 +296,7 @@ export default function EditProduct() {
             className="w-full px-4 py-3 bg-[#0f172a] border rounded-xl text-white"
           />
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <input
               type="number"
               name="priceDa"
@@ -294,25 +337,30 @@ export default function EditProduct() {
 
         </div>
 
-        {existingImages.length > 0 && (
-          <div className="flex gap-4 flex-wrap">
-            {existingImages.map((img, i) => (
-              <div key={i} className="relative w-32">
-                <img src={img} className="rounded-xl" />
-                <button
-                  type="button"
-                  onClick={() => removeExistingImage(i)}
-                  className="absolute top-2 right-2 bg-red-600 p-1 rounded-full"
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            ))}
+        <div className="bg-[#111827] border border-[#d4af37]/20 rounded-2xl p-6 space-y-4">
+          <div>
+            <h2 className="text-white font-bold mb-1">Images produit</h2>
+            <p className="text-gray-400 text-sm">Ajoute une image compressée ou une URL HTTP/HTTPS.</p>
           </div>
-        )}
 
-        {/* Bloc URL image et previews */}
-        <div className="space-y-4">
+          <label className="flex flex-col items-center justify-center gap-3 border border-dashed border-[#d4af37]/40 rounded-2xl p-6 bg-[#0f172a] text-center cursor-pointer hover:border-[#d4af37] transition">
+            <ImagePlus className="text-[#d4af37]" size={28} />
+            <span className="text-white font-semibold">
+              {uploading ? 'Compression et upload...' : 'Uploader des images produit'}
+            </span>
+            <span className="text-gray-400 text-sm">
+              JPG, PNG ou WEBP compressés automatiquement
+            </span>
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              multiple
+              disabled={uploading}
+              onChange={(e) => handleUploadFiles(e.target.files)}
+              className="hidden"
+            />
+          </label>
+
           <div className="flex gap-2">
             <input
               type="text"
@@ -325,36 +373,61 @@ export default function EditProduct() {
             <button
               type="button"
               onClick={handleAddUrl}
-              className="px-4 py-3 bg-[#d4af37] text-[#0b1220] font-bold rounded-xl"
+              className="px-4 py-3 bg-[#d4af37] text-[#0b1220] font-bold rounded-xl disabled:opacity-60"
+              disabled={uploading}
             >
               Ajouter
             </button>
           </div>
 
+          {existingImages.length > 0 && (
+            <div>
+              <p className="text-gray-300 text-sm mb-3">Images actuelles</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                {existingImages.map((img, i) => (
+                  <div key={i} className="relative aspect-square">
+                    <img src={img} className="w-full h-full object-cover rounded-xl border border-white/10" alt={`image-actuelle-${i}`} />
+                    <button
+                      type="button"
+                      onClick={() => removeExistingImage(i)}
+                      className="absolute top-2 right-2 bg-red-600 p-1 rounded-full text-white shadow"
+                      aria-label="Supprimer cette image"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {newUrls.length > 0 && (
-            <div className="flex gap-4 flex-wrap">
-              {newUrls.map((src, i) => (
-                <div key={i} className="relative w-32 h-32">
-                  <img
-                    src={src}
-                    alt={`preview-${i}`}
-                    className="w-full h-full object-cover rounded-xl border border-white/10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeNewUrl(i)}
-                    className="absolute top-2 right-2 bg-red-600 p-1 rounded-full text-white shadow"
-                    aria-label="Supprimer cette image"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              ))}
+            <div>
+              <p className="text-gray-300 text-sm mb-3">Nouvelles images</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                {newUrls.map((src, i) => (
+                  <div key={i} className="relative aspect-square">
+                    <img
+                      src={src}
+                      alt={`preview-${i}`}
+                      className="w-full h-full object-cover rounded-xl border border-white/10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeNewUrl(i)}
+                      className="absolute top-2 right-2 bg-red-600 p-1 rounded-full text-white shadow"
+                      aria-label="Supprimer cette image"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
 
-        <div className="flex gap-4 justify-end">
+        <div className="sticky bottom-0 z-10 flex gap-4 justify-end bg-[#0b1220]/95 py-4">
           <button
             type="button"
             onClick={() => router.push('/admin/products')}
