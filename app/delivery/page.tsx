@@ -1,3 +1,11 @@
+import { buildPageMetadata } from '@/lib/seo'
+
+export const metadata = buildPageMetadata({
+  title: 'Livraison & Paiement en Algérie - Store DZ',
+  description: 'Store DZ livre ses montres premium dans les 58 wilayas d’Algérie. Paiement à la livraison et confirmation de commande par téléphone.',
+  path: '/delivery',
+})
+
 export default function DeliveryPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

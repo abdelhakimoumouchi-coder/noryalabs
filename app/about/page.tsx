@@ -1,14 +1,22 @@
+import { buildPageMetadata } from '@/lib/seo'
+
+export const metadata = buildPageMetadata({
+  title: 'À propos de Store DZ - Montres Premium en Algérie',
+  description: 'Découvrez Store DZ, boutique algérienne spécialisée dans les montres premium homme et femme, originales, garanties et livrées partout en Algérie.',
+  path: '/about',
+})
+
 export default function AboutPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <h1 className="font-heading text-4xl font-bold mb-8">À Propos de Store Dz</h1>
+      <h1 className="font-heading text-4xl font-bold mb-8">À Propos de Store DZ</h1>
 
       <div className="prose prose-lg max-w-none">
         {/* HISTOIRE */}
         <div className="bg-surface rounded-xl p-8 mb-8">
           <h2 className="font-heading text-2xl font-bold mb-4">Notre Histoire</h2>
           <p className="text-text/80 mb-4">
-            Store Dz est né d’une idée simple : rendre l’élégance horlogère accessible partout en Algérie.
+            Store DZ est né d’une idée simple : rendre l’élégance horlogère accessible partout en Algérie.
             Passionnés de montres, nous avons créé une boutique en ligne dédiée aux montres 100% originales,
             sélectionnées pour leur qualité, leur fiabilité et leur style.
           </p>
@@ -42,7 +50,7 @@ export default function AboutPage() {
             <div>
               <h3 className="font-semibold text-lg mb-2">Pensé pour l’Algérie</h3>
               <p className="text-text/70 text-sm">
-                Livraison partout en Algérie, expérience mobile-first et interface en français : Store Dz est conçu
+                Livraison partout en Algérie, expérience mobile-first et interface en français : Store DZ est conçu
                 pour répondre aux besoins des clients algériens, où qu’ils se trouvent.
               </p>
             </div>
@@ -62,7 +70,7 @@ export default function AboutPage() {
         <div className="bg-surface rounded-xl p-8">
           <h2 className="font-heading text-2xl font-bold mb-4">Notre Engagement</h2>
           <p className="text-text/80 mb-4">
-            Chez Store Dz, nous voulons que chaque client soit fier de porter sa montre. C’est pourquoi nous
+            Chez Store DZ, nous voulons que chaque client soit fier de porter sa montre. C’est pourquoi nous
             mettons l’accent sur la qualité des produits, la clarté des informations et un parcours d’achat fluide,
             du catalogue jusqu’au checkout.
           </p>

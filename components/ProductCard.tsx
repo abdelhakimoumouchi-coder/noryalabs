@@ -5,6 +5,7 @@ import { formatPrice } from '@/lib/utils'
 import { Product } from '@/types'
 import { useCart } from '@/contexts/CartContext'
 import { useRouter } from 'next/navigation'
+import { categoryLabel } from '@/lib/seo'
 
 const FALLBACK_IMG = '/placeholder.jpg'
 
@@ -24,13 +25,6 @@ export default function ProductCard({ product }: { product: Product }) {
   const discountPercent = hasPromotion
     ? Math.round(((product.oldPriceDa! - product.priceDa) / product.oldPriceDa!) * 100)
     : 0
-
-  const categoryLabel =
-    product.category === 'skincare'
-      ? 'Soin de la peau'
-      : product.category === 'haircare'
-        ? 'Soin des cheveux'
-        : product.category || 'Autre'
 
   const href = product.slug ? `/product/${product.slug}` : '/shop'
 
@@ -85,7 +79,7 @@ export default function ProductCard({ product }: { product: Product }) {
       </Link>
 
       <div className="p-2.5 sm:p-4 space-y-2 sm:space-y-3">
-        <p className="text-[10px] sm:text-xs text-muted uppercase tracking-wide truncate">{categoryLabel}</p>
+        <p className="text-[10px] sm:text-xs text-muted uppercase tracking-wide truncate">{categoryLabel(product.category)}</p>
         <h3 className="font-heading text-sm sm:text-lg font-semibold text-text line-clamp-2 leading-snug">
           {product.name}
         </h3>

@@ -3,17 +3,60 @@ import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import ProductCard from '@/components/ProductCard'
 import { Product } from '@/types'
+import { SITE_URL, STORE_PHONE, homeDescription, normalizeProduct } from '@/lib/seo'
 
 export const dynamic = 'force-dynamic'
 
 export default async function HomePage() {
-  const featuredProducts = await prisma.product.findMany({
+  const featuredProductsRaw = await prisma.product.findMany({
     where: { isFeatured: true },
     take: 6,
-  }) as Product[]
+    orderBy: { createdAt: 'desc' },
+  })
+  const featuredProducts = featuredProductsRaw.map(normalizeProduct) as Product[]
+
+  const organizationJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'OnlineStore',
+    name: 'Store DZ',
+    url: SITE_URL,
+    logo: `${SITE_URL}/logo.png`,
+    description: 'Boutique algérienne de montres premium homme et femme, 100% originales, avec livraison partout en Algérie.',
+    areaServed: {
+      '@type': 'Country',
+      name: 'Algeria',
+    },
+    contactPoint: {
+      '@type': 'ContactPoint',
+      telephone: STORE_PHONE,
+      contactType: 'customer service',
+      areaServed: 'DZ',
+      availableLanguage: ['fr', 'ar'],
+    },
+  }
+
+  const websiteJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Store DZ',
+    url: SITE_URL,
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: `${SITE_URL}/shop?search={search_term_string}`,
+      'query-input': 'required name=search_term_string',
+    },
+  }
 
   return (
     <div className="bg-background text-text">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+      />
       {/* HERO */}
       <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden">
         <Image
@@ -32,7 +75,7 @@ export default async function HomePage() {
             L’élégance au poignet,<br /> livrée partout en Algérie
           </h1>
           <p className="text-lg md:text-xl text-muted mb-8">
-            Montres 100% originales • Qualité premium • Garantie 2 ans
+            {homeDescription}
           </p>
           <div className="flex flex-col items-center gap-3">
             <Link href="/shop" className="btn-primary">
@@ -95,7 +138,7 @@ export default async function HomePage() {
             <div className="relative w-48 min-h-[170px]">
               <Image
                 src="/homme.jpg"
-                alt="Montres Homme"
+                alt="Montre homme premium originale Store DZ"
                 fill
                 quality={95}
                 sizes="(max-width: 768px) 50vw, 12rem"
@@ -121,7 +164,7 @@ export default async function HomePage() {
             <div className="relative w-48 min-h-[170px]">
               <Image
                 src="/femme.jpg"
-                alt="Montres Femme"
+                alt="Montre femme élégante premium en Algérie"
                 fill
                 quality={95}
                 sizes="(max-width: 768px) 50vw, 12rem"

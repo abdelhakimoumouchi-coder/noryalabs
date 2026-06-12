@@ -92,7 +92,7 @@ export async function GET(request: NextRequest) {
         ...p,
         oldPriceDa:
           p.oldPriceDa && p.oldPriceDa > p.priceDa ? p.oldPriceDa : null,
-        images: imgs.length > 0 ? imgs : ['/placeholder.png'], // 🔥 fallback
+        images: imgs.length > 0 ? imgs : ['/placeholder.jpg'], // fallback
       }
     })
 

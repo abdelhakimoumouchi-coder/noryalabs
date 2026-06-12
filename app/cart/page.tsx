@@ -15,7 +15,7 @@ export default function CartPage() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
         </svg>
         <h1 className="font-heading text-3xl font-bold mb-4">Votre panier est vide</h1>
-        <p className="text-muted mb-8">Découvrez nos produits naturels algériens</p>
+        <p className="text-muted mb-8">Découvrez nos montres premium homme et femme.</p>
         <Link
           href="/shop"
           className="inline-block bg-accent text-background px-8 py-3 rounded-lg font-semibold hover:bg-accentDark transition"

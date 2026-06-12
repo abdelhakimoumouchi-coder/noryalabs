@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { STORE_EMAIL, STORE_PHONE, STORE_PHONE_DISPLAY } from '@/lib/seo'
 
 export default function Footer() {
   return (
@@ -6,7 +7,7 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <h3 className="font-heading text-xl font-bold mb-4 text-accent">Store Dz</h3>
+            <h3 className="font-heading text-xl font-bold mb-4 text-accent">Store DZ</h3>
             <p className="text-sm text-muted">
               L'élégance au poignet, livrée partout en Algérie.
             </p>
@@ -26,9 +27,8 @@ export default function Footer() {
             <h4 className="font-semibold mb-4">Support</h4>
             <ul className="space-y-2 text-sm text-muted">
               <li><Link href="/contact" className="hover:text-text transition">Service client</Link></li>
-              <li><Link href="/admin/orders" className="hover:text-text transition">Admin</Link></li>
-              <li><a href="tel:+213555123456" className="hover:text-text transition">+213 555 123 456</a></li>
-              <li><a href="mailto:support@storedz.dz" className="hover:text-text transition">support@storedz.dz</a></li>
+              <li><a href={`tel:${STORE_PHONE}`} className="hover:text-text transition">{STORE_PHONE_DISPLAY}</a></li>
+              <li><a href={`mailto:${STORE_EMAIL}`} className="hover:text-text transition">{STORE_EMAIL}</a></li>
             </ul>
           </div>
 
@@ -51,7 +51,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="mt-10 text-center text-xs text-muted">
-          © {new Date().getFullYear()} Store Dz. Tous droits réservés.
+          © {new Date().getFullYear()} Store DZ. Tous droits réservés.
         </div>
       </div>
     </footer>

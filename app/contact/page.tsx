@@ -1,3 +1,11 @@
+import { buildPageMetadata, STORE_EMAIL, STORE_PHONE, STORE_PHONE_DISPLAY } from '@/lib/seo'
+
+export const metadata = buildPageMetadata({
+  title: 'Contact Store DZ - Boutique de Montres en Algérie',
+  description: 'Contactez Store DZ pour vos commandes de montres premium homme et femme en Algérie. Assistance par téléphone, email ou WhatsApp.',
+  path: '/contact',
+})
+
 export default function ContactPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -15,7 +23,7 @@ export default function ContactPage() {
                 </svg>
                 <h3 className="font-semibold text-lg">Téléphone</h3>
               </div>
-              <p className="text-text/70 ml-9">+213 555 123 456</p>
+              <p className="text-text/70 ml-9">{STORE_PHONE_DISPLAY}</p>
             </div>
 
             <div>
@@ -25,7 +33,7 @@ export default function ContactPage() {
                 </svg>
                 <h3 className="font-semibold text-lg">Email</h3>
               </div>
-              <p className="text-text/70 ml-9">contact@noryalabs.dz</p>
+              <p className="text-text/70 ml-9">{STORE_EMAIL}</p>
             </div>
 
             <div>
@@ -97,7 +105,7 @@ export default function ContactPage() {
         <h3 className="font-heading text-xl font-bold mb-2">Contactez-nous sur WhatsApp</h3>
         <p className="mb-4">Pour une réponse rapide, contactez-nous directement via WhatsApp</p>
         <a
-          href="https://wa.me/213555123456"
+          href={`https://wa.me/${STORE_PHONE.replace('+', '')}`}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 bg-white text-green-500 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
