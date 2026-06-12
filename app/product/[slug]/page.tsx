@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
     })
   }
 
-  const title = `${product.name} - Montre Premium Originale en Algérie`
+  const title = `${product.name} - Montre Premium Originale en Algérie - Store DZ`
   const description = truncateMeta(
     `${productDescription(product)} Livraison partout en Algérie, paiement à la livraison et garantie 2 ans.`
   )
@@ -49,6 +49,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
     description,
     path: `/product/${product.slug}`,
     image,
+    robots: product.stock > 0 && product.description?.trim() && product.images.length > 0 ? 'index, follow' : 'noindex, follow',
   })
 }
 

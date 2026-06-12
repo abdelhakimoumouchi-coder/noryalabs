@@ -52,7 +52,7 @@ export default function ProductCard({ product }: { product: Product }) {
         <div className="relative aspect-square overflow-hidden bg-highlight">
           <img
             src={mainImage}
-            alt={product.name}
+            alt={`${categoryLabel(product.category).toLowerCase()} originale ${product.name} en Algérie`}
             loading="lazy"
             className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             onError={(e) => {

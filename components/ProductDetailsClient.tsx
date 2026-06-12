@@ -51,7 +51,7 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
             <div className="relative aspect-square mb-4 rounded-xl overflow-hidden bg-surface border border-border">
               <img
                 src={images[selectedImage] || '/placeholder.jpg'}
-                alt={`${product.name} - montre premium originale Store DZ`}
+                alt={`${categoryLabel(product.category).toLowerCase()} originale ${product.name} en Algérie`}
                 className="absolute inset-0 w-full h-full object-cover"
               />
             </div>

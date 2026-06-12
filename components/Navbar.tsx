@@ -8,6 +8,8 @@ import clsx from 'clsx'
 const links = [
   { href: '/', label: 'Accueil' },
   { href: '/shop', label: 'Boutique' },
+  { href: '/montres-homme', label: 'Homme' },
+  { href: '/montres-femme', label: 'Femme' },
   { href: '/about', label: 'À propos' },
   { href: '/delivery', label: 'Livraison' },
   { href: '/contact', label: 'Contact' },

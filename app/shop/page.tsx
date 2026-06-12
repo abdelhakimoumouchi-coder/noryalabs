@@ -50,8 +50,8 @@ export async function generateMetadata({ searchParams }: ShopPageProps): Promise
   if (category) return metadataForCategory(category)
 
   return buildPageMetadata({
-    title: 'Boutique Montres Homme & Femme Premium - Store DZ Algérie',
-    description: 'Découvrez notre collection de montres homme et femme premium, originales et garanties. Livraison partout en Algérie avec paiement à la livraison.',
+    title: 'Boutique Montres Homme & Femme Premium en Algérie - Store DZ',
+    description: 'Découvrez notre boutique de montres homme et femme premium en Algérie. Produits 100% originaux, garantie 2 ans, livraison dans les 58 wilayas et paiement à la livraison.',
     path: '/shop',
   })
 }
@@ -78,7 +78,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   const collectionJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
-    name: category || 'Boutique Montres Homme & Femme Premium - Store DZ Algérie',
+    name: category || 'Boutique Montres Homme & Femme Premium en Algérie - Store DZ',
     url: category ? `${SITE_URL}/shop?category=${encodeURIComponent(category)}` : `${SITE_URL}/shop`,
     description: category
       ? `Collection ${category.toLowerCase()} premium disponible en Algérie avec paiement à la livraison.`

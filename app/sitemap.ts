@@ -21,6 +21,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     },
     {
+      url: `${SITE_URL}/montres-homme`,
+      lastModified: today,
+      changeFrequency: 'weekly',
+      priority: 0.85,
+    },
+    {
+      url: `${SITE_URL}/montres-femme`,
+      lastModified: today,
+      changeFrequency: 'weekly',
+      priority: 0.85,
+    },
+    {
+      url: `${SITE_URL}/montres-originales-algerie`,
+      lastModified: today,
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    },
+    {
+      url: `${SITE_URL}/montres-premium-algerie`,
+      lastModified: today,
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    },
+    {
       url: `${SITE_URL}/about`,
       lastModified: today,
       changeFrequency: 'monthly',
@@ -41,23 +65,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ]
 
   try {
-    const [categories, products] = await Promise.all([
-      prisma.category.findMany({
-        orderBy: { order: 'asc' },
-        select: { name: true, updatedAt: true },
-      }),
-      prisma.product.findMany({
-        orderBy: { updatedAt: 'desc' },
-        select: { slug: true, updatedAt: true },
-      }),
-    ])
-
-    const categoryRoutes: MetadataRoute.Sitemap = categories.map((category) => ({
-      url: `${SITE_URL}/shop?category=${encodeURIComponent(category.name)}`,
-      lastModified: category.updatedAt,
-      changeFrequency: 'weekly',
-      priority: category.name.toLowerCase().includes('homme') || category.name.toLowerCase().includes('femme') ? 0.8 : 0.7,
-    }))
+    const products = await prisma.product.findMany({
+      where: {
+        stock: { gt: 0 },
+        description: { not: '' },
+      },
+      orderBy: { updatedAt: 'desc' },
+      select: { slug: true, updatedAt: true },
+    })
 
     const productRoutes: MetadataRoute.Sitemap = products.map((product) => ({
       url: `${SITE_URL}/product/${product.slug}`,
@@ -66,7 +81,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     }))
 
-    return [...staticRoutes, ...categoryRoutes, ...productRoutes]
+    return [...staticRoutes, ...productRoutes]
   } catch (error) {
     console.error('Unable to generate dynamic sitemap entries:', error)
     return staticRoutes

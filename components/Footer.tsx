@@ -17,6 +17,10 @@ export default function Footer() {
             <h4 className="font-semibold mb-4">Navigation</h4>
             <ul className="space-y-2 text-sm text-muted">
               <li><Link href="/shop" className="hover:text-text transition">Boutique</Link></li>
+              <li><Link href="/montres-homme" className="hover:text-text transition">Montres homme</Link></li>
+              <li><Link href="/montres-femme" className="hover:text-text transition">Montres femme</Link></li>
+              <li><Link href="/montres-originales-algerie" className="hover:text-text transition">Montres originales</Link></li>
+              <li><Link href="/montres-premium-algerie" className="hover:text-text transition">Montres premium</Link></li>
               <li><Link href="/about" className="hover:text-text transition">À propos</Link></li>
               <li><Link href="/delivery" className="hover:text-text transition">Livraison</Link></li>
               <li><Link href="/contact" className="hover:text-text transition">Contact</Link></li>

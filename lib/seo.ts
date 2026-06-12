@@ -68,7 +68,9 @@ export function buildPageMetadata({
 }): Metadata {
   const url = absoluteUrl(path)
   return {
-    title,
+    title: {
+      absolute: title,
+    },
     description,
     robots,
     alternates: {

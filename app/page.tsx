@@ -79,7 +79,7 @@ export default async function HomePage() {
           </p>
           <div className="flex flex-col items-center gap-3">
             <Link href="/shop" className="btn-primary">
-              Découvrir la collection
+              Découvrir nos montres premium
             </Link>
           </div>
         </div>
@@ -89,7 +89,7 @@ export default async function HomePage() {
       <section className="py-16 bg-surface">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
-            <h2 className="section-title">Produits Vedettes</h2>
+            <h2 className="section-title">Produits vedettes</h2>
             <p className="section-subtitle">Nos best-sellers et nouveautés</p>
           </div>
 
@@ -113,7 +113,7 @@ export default async function HomePage() {
               href="/shop"
               className="inline-flex items-center justify-center px-8 py-3 rounded-lg font-semibold bg-text text-background hover:bg-text/90 transition"
             >
-              Voir Tous les Produits
+              Voir toutes les montres
             </Link>
           </div>
         </div>
@@ -127,12 +127,12 @@ export default async function HomePage() {
             <div className="p-8 flex-1 flex flex-col justify-center">
               <h3 className="font-heading text-2xl font-bold mb-4">Montre Homme</h3>
               <p className="text-muted mb-4">
-                Collection exclusive, élégance et performance.
+                Montres homme premium originales en Algérie, adaptées au quotidien, au travail et aux cadeaux.
               </p>
               <Link
-                href="/shop?category=montre pour homme"
+                href="/montres-homme"
                 className="text-accent font-semibold hover:underline">
-                Découvrir →
+                Voir les montres homme →
               </Link>
             </div>
             <div className="relative w-48 min-h-[170px]">
@@ -153,12 +153,12 @@ export default async function HomePage() {
             <div className="p-8 flex-1 flex flex-col justify-center">
               <h3 className="font-heading text-2xl font-bold mb-4">Montre Femme</h3>
               <p className="text-muted mb-4">
-                Style, raffinement et fiabilité au quotidien.
+                Montres femme élégantes et raffinées, livrées partout en Algérie avec garantie 2 ans.
               </p>
               <Link
-                href="/shop?category=montre pour femme"
+                href="/montres-femme"
                 className="text-accent font-semibold hover:underline">
-                Découvrir →
+                Voir les montres femme →
               </Link>
             </div>
             <div className="relative w-48 min-h-[170px]">
@@ -179,11 +179,17 @@ export default async function HomePage() {
       {/* AVANTAGES */}
       <section className="py-16 bg-surface">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-10">
+            <h2 className="section-title">Pourquoi choisir Store DZ ?</h2>
+            <p className="section-subtitle">
+              Une boutique de montres premium en Algérie pensée pour commander simplement et sereinement.
+            </p>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
               {
-                title: 'Livraison en Algérie',
-                desc: 'Vers toutes les wilayas, suivi assuré',
+                title: 'Livraison dans les 58 wilayas',
+                desc: 'Vos montres sont livrées partout en Algérie après confirmation de commande.',
                 icon: (
                   <svg className="w-8 h-8 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -200,8 +206,8 @@ export default async function HomePage() {
                 ),
               },
               {
-                title: 'Produits 100% Originaux',
-                desc: 'Authenticité garantie, qualité premium',
+                title: 'Montres originales garanties 2 ans',
+                desc: 'Des modèles premium homme et femme, sélectionnés pour leur authenticité et leur qualité.',
                 icon: (
                   <svg className="w-8 h-8 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -217,6 +223,30 @@ export default async function HomePage() {
                 <p className="text-muted">{item.desc}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="py-16">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="section-title">Montres premium pour homme et femme</h2>
+          <div className="mt-6 space-y-4 text-text/80 leading-7">
+            <p>
+              Store DZ est une boutique de montres en Algérie spécialisée dans les modèles premium pour homme et
+              femme. Notre sélection s’adresse aux clients qui cherchent une montre originale, élégante et facile à
+              commander, que ce soit pour un usage quotidien, un cadeau ou un événement.
+            </p>
+            <p>
+              Les pages de collection vous aident à comparer les montres homme, les montres femme, les montres
+              originales et les montres premium disponibles avec livraison nationale. Chaque produit affiche son prix
+              en dinars algériens, ses images et ses informations essentielles avant l’achat.
+            </p>
+          </div>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link href="/shop" className="btn-secondary">découvrir nos montres premium</Link>
+            <Link href="/montres-originales-algerie" className="btn-secondary">acheter une montre originale en Algérie</Link>
+            <Link href="/montres-premium-algerie" className="btn-secondary">montres premium en Algérie</Link>
+            <Link href="/delivery" className="btn-secondary">livraison de montres en Algérie</Link>
           </div>
         </div>
       </section>
