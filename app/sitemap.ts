@@ -21,30 +21,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     },
     {
-      url: `${SITE_URL}/montres-homme`,
-      lastModified: today,
-      changeFrequency: 'weekly',
-      priority: 0.85,
-    },
-    {
-      url: `${SITE_URL}/montres-femme`,
-      lastModified: today,
-      changeFrequency: 'weekly',
-      priority: 0.85,
-    },
-    {
-      url: `${SITE_URL}/montres-originales-algerie`,
-      lastModified: today,
-      changeFrequency: 'weekly',
-      priority: 0.8,
-    },
-    {
-      url: `${SITE_URL}/montres-premium-algerie`,
-      lastModified: today,
-      changeFrequency: 'weekly',
-      priority: 0.8,
-    },
-    {
       url: `${SITE_URL}/about`,
       lastModified: today,
       changeFrequency: 'monthly',

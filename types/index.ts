@@ -20,11 +20,19 @@ export interface Product {
   description: string
   benefits: string[]
   images: string[]
-  colors?: string[]
+  colors?: ProductColor[]
   stock: number
   isFeatured: boolean
   createdAt: Date
   updatedAt: Date
+}
+
+export interface ProductColor {
+  name: string
+  hex?: string | null
+  imageUrl?: string | null
+  stock?: number | null
+  sortOrder?: number | null
 }
 
 export type OrderStatus =
@@ -59,6 +67,9 @@ export interface OrderItem {
   quantity: number
   unitPriceDa: number
   subtotalDa: number
+  selectedColorName?: string | null
+  selectedColorHex?: string | null
+  selectedColorImage?: string | null
   product?: Product
 }
 

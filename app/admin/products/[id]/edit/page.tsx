@@ -5,6 +5,13 @@ import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, ImagePlus, Trash2, X } from 'lucide-react';
 import { compressProductImage } from '@/lib/clientImageCompression';
 
+type ColorVariantForm = {
+  name: string;
+  hex: string;
+  imageUrl: string;
+  stock: string;
+};
+
 export default function EditProduct() {
   const router = useRouter();
   const params = useParams();
@@ -21,6 +28,7 @@ export default function EditProduct() {
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [newUrls, setNewUrls] = useState<string[]>([]);
   const [urlInput, setUrlInput] = useState('');
+  const [colorVariants, setColorVariants] = useState<ColorVariantForm[]>([]);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -30,7 +38,6 @@ export default function EditProduct() {
     priceDa: '',
     oldPriceDa: '',
     stock: '0',
-    colors: '',
     isFeatured: false,
     promotion: false,
   });
@@ -50,7 +57,6 @@ export default function EditProduct() {
           priceDa: String(product.priceDa || ''),
           oldPriceDa: product.oldPriceDa ? String(product.oldPriceDa) : '',
           stock: String(product.stock || 0),
-          colors: product.colors?.join(', ') || '',
           isFeatured: product.isFeatured || false,
           promotion: !!product.oldPriceDa,
         });
@@ -63,6 +69,25 @@ export default function EditProduct() {
         } else {
           setExistingImages([]);
         }
+
+        const productImages = Array.isArray(product.images) ? product.images : [];
+        const colors = Array.isArray(product.colors) ? product.colors : [];
+        setColorVariants(colors.map((color: any, index: number) => {
+          if (typeof color === 'string') {
+            return {
+              name: color,
+              hex: '#D4AF37',
+              imageUrl: productImages[index] || '',
+              stock: '',
+            };
+          }
+          return {
+            name: color?.name || '',
+            hex: color?.hex || '#D4AF37',
+            imageUrl: color?.imageUrl || '',
+            stock: color?.stock != null ? String(color.stock) : '',
+          };
+        }).filter((color: ColorVariantForm) => color.name));
       });
   }, [productId]);
 
@@ -199,9 +224,15 @@ export default function EditProduct() {
         subcategoryId: formData.subcategoryId || undefined,
         description: formData.description,
         images: finalImages,
-        colors: formData.colors
-          ? formData.colors.split(',').map(c => c.trim())
-          : [],
+        colors: colorVariants
+          .filter((color) => color.name.trim())
+          .map((color, index) => ({
+            name: color.name.trim(),
+            hex: color.hex.trim() || null,
+            imageUrl: color.imageUrl || null,
+            stock: color.stock ? parseInt(color.stock) : null,
+            sortOrder: index,
+          })),
         stock: parseInt(formData.stock),
         isFeatured: formData.isFeatured,
       };
@@ -352,15 +383,6 @@ export default function EditProduct() {
             </div>
           </div>
 
-          <input
-            type="text"
-            name="colors"
-            value={formData.colors}
-            onChange={handleChange}
-            placeholder="Couleurs (séparées par des virgules)"
-            className="w-full px-4 py-3 bg-[#0f172a] border rounded-xl text-white"
-          />
-
           <div className="flex items-center gap-3">
             <input
               type="checkbox"
@@ -463,6 +485,85 @@ export default function EditProduct() {
               </div>
             </div>
           )}
+        </div>
+
+        <div className="bg-[#111827] border border-[#d4af37]/20 rounded-2xl p-6 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-white font-bold mb-1">Couleurs produit</h2>
+              <p className="text-gray-400 text-sm">Associe une couleur à une image pour que la galerie change côté client.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setColorVariants((prev) => [...prev, { name: '', hex: '#D4AF37', imageUrl: [...existingImages, ...newUrls][0] || '', stock: '' }])}
+              className="px-4 py-2 bg-[#d4af37] text-[#0b1220] font-bold rounded-xl"
+            >
+              Ajouter couleur
+            </button>
+          </div>
+
+          {colorVariants.length === 0 && (
+            <p className="text-sm text-gray-400">Aucune couleur spécifique. Le produit utilisera ses images générales.</p>
+          )}
+
+          <div className="space-y-4">
+            {colorVariants.map((color, index) => {
+              const allImages = [...existingImages, ...newUrls];
+              return (
+                <div key={index} className="grid grid-cols-1 md:grid-cols-[1fr_120px_1fr_110px_auto] gap-3 items-end rounded-xl border border-white/10 bg-[#0f172a] p-4">
+                  <label className="block">
+                    <span className="block text-xs text-gray-300 mb-1">Nom couleur</span>
+                    <input
+                      value={color.name}
+                      onChange={(e) => setColorVariants((prev) => prev.map((item, i) => i === index ? { ...item, name: e.target.value } : item))}
+                      placeholder="Doré, Noir..."
+                      className="w-full px-3 py-2 bg-[#111827] border border-white/10 rounded-lg text-white"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="block text-xs text-gray-300 mb-1">Hex</span>
+                    <input
+                      type="color"
+                      value={color.hex || '#D4AF37'}
+                      onChange={(e) => setColorVariants((prev) => prev.map((item, i) => i === index ? { ...item, hex: e.target.value } : item))}
+                      className="h-10 w-full bg-[#111827] border border-white/10 rounded-lg"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="block text-xs text-gray-300 mb-1">Image liée</span>
+                    <select
+                      value={color.imageUrl}
+                      onChange={(e) => setColorVariants((prev) => prev.map((item, i) => i === index ? { ...item, imageUrl: e.target.value } : item))}
+                      className="w-full px-3 py-2 bg-[#111827] border border-white/10 rounded-lg text-white"
+                    >
+                      <option value="">Aucune</option>
+                      {allImages.map((img, imgIndex) => (
+                        <option key={`${img}-${imgIndex}`} value={img}>Image {imgIndex + 1}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="block">
+                    <span className="block text-xs text-gray-300 mb-1">Stock</span>
+                    <input
+                      type="number"
+                      value={color.stock}
+                      onChange={(e) => setColorVariants((prev) => prev.map((item, i) => i === index ? { ...item, stock: e.target.value } : item))}
+                      placeholder="Optionnel"
+                      className="w-full px-3 py-2 bg-[#111827] border border-white/10 rounded-lg text-white"
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setColorVariants((prev) => prev.filter((_, i) => i !== index))}
+                    className="h-10 rounded-lg border border-red-500/40 px-3 text-red-300 hover:bg-red-500/10"
+                    aria-label="Supprimer cette couleur"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         <div className="sticky bottom-0 z-10 flex gap-4 justify-end bg-[#0b1220]/95 py-4">

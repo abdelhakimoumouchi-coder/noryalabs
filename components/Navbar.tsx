@@ -1,15 +1,14 @@
 'use client'
 
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { Menu, ShoppingBag, X } from 'lucide-react'
 import { useCart } from '@/contexts/CartContext'
 import clsx from 'clsx'
 
 const links = [
   { href: '/', label: 'Accueil' },
   { href: '/shop', label: 'Boutique' },
-  { href: '/montres-homme', label: 'Homme' },
-  { href: '/montres-femme', label: 'Femme' },
   { href: '/about', label: 'À propos' },
   { href: '/delivery', label: 'Livraison' },
   { href: '/contact', label: 'Contact' },
@@ -24,38 +23,40 @@ export default function Navbar() {
     setHasItems(totalItems > 0)
   }, [totalItems])
 
+  useEffect(() => {
+    document.body.style.overflow = open ? 'hidden' : ''
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [open])
+
   return (
-    <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur border-b border-border">
+    <header className="sticky top-0 z-50 border-b border-border/80 bg-background/90 backdrop-blur-xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <Link href="/" className="font-heading text-2xl font-bold text-accent hover:text-accentDark transition">
+        <div className="flex h-16 items-center justify-between gap-4">
+          <Link href="/" className="font-heading text-2xl font-bold tracking-wide text-accent hover:text-accent">
             Store DZ
           </Link>
 
-          <div className="hidden md:flex items-center gap-6">
+          <nav className="hidden md:flex items-center gap-7">
             {links.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="text-muted hover:text-text transition font-medium"
-              >
+              <Link key={item.href} href={item.href} className="text-sm font-medium text-muted hover:text-text">
                 {item.label}
               </Link>
             ))}
-          </div>
+          </nav>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <Link
               href="/cart"
-              className="relative inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-card border border-border text-text hover:border-accent transition"
+              className="relative inline-flex h-10 items-center justify-center gap-2 rounded-full border border-border bg-card px-3 text-text hover:border-accent hover:text-accent"
+              aria-label="Ouvrir le panier"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-              </svg>
-              <span className="text-sm font-semibold">Panier</span>
+              <ShoppingBag size={18} />
+              <span className="hidden sm:inline text-sm font-semibold">Panier</span>
               <span
                 className={clsx(
-                  'absolute -top-2 -right-2 bg-accent text-background text-xs w-6 h-6 rounded-full flex items-center justify-center font-bold transition-transform',
+                  'absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1 text-xs font-bold text-background transition-transform',
                   hasItems ? 'scale-100' : 'scale-0'
                 )}
                 aria-live="polite"
@@ -64,36 +65,63 @@ export default function Navbar() {
               </span>
             </Link>
             <button
-              className="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-lg border border-border text-text hover:border-accent transition"
-              onClick={() => setOpen((v) => !v)}
+              type="button"
+              className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-text hover:border-accent"
+              onClick={() => setOpen(true)}
               aria-label="Ouvrir le menu"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                {open ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
-                )}
-              </svg>
+              <Menu size={20} />
             </button>
           </div>
         </div>
-
-        {open && (
-          <div className="md:hidden pb-4 space-y-2">
-            {links.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setOpen(false)}
-                className="block w-full px-4 py-3 rounded-lg bg-card border border-border text-text hover:border-accent transition font-medium"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </div>
-        )}
       </div>
-    </nav>
+
+      {open && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <button
+            type="button"
+            aria-label="Fermer le menu"
+            className="absolute inset-0 bg-black/70"
+            onClick={() => setOpen(false)}
+          />
+          <div className="absolute right-0 top-0 h-full w-[min(88vw,360px)] border-l border-border bg-background p-5 shadow-2xl">
+            <div className="mb-8 flex items-center justify-between">
+              <Link href="/" onClick={() => setOpen(false)} className="font-heading text-2xl font-bold text-accent">
+                Store DZ
+              </Link>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border text-text"
+                aria-label="Fermer le menu"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <nav className="grid gap-3">
+              {links.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setOpen(false)}
+                  className="rounded-xl border border-border bg-card px-4 py-4 text-base font-semibold text-text hover:border-accent"
+                >
+                  {item.label}
+                </Link>
+              ))}
+              <Link
+                href="/cart"
+                onClick={() => setOpen(false)}
+                className="mt-3 inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-4 py-4 font-semibold text-background"
+              >
+                <ShoppingBag size={18} />
+                Panier ({totalItems})
+              </Link>
+            </nav>
+          </div>
+        </div>
+      )}
+    </header>
   )
 }

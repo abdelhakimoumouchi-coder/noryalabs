@@ -34,7 +34,7 @@ export default function CartPage() {
         <div className="lg:col-span-2">
           <div className="bg-surface rounded-xl shadow-sm overflow-hidden border border-border">
             {items.map((item) => (
-              <div key={item.productId} className="flex gap-4 p-6 border-b border-border last:border-b-0">
+              <div key={item.cartKey || item.productId} className="flex gap-4 p-4 sm:p-6 border-b border-border last:border-b-0">
                 <Link href={`/product/${item.slug}`} className="relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-background border border-border">
                   <Image src={item.image} alt={item.name} fill className="object-cover" />
                 </Link>
@@ -43,19 +43,30 @@ export default function CartPage() {
                   <Link href={`/product/${item.slug}`} className="font-heading text-lg font-semibold hover:text-accent">
                     {item.name}
                   </Link>
+                  {item.selectedColorName && (
+                    <p className="mt-1 flex items-center gap-2 text-sm text-muted">
+                      {item.selectedColorHex && (
+                        <span
+                          className="inline-block h-4 w-4 rounded-full border border-border"
+                          style={{ backgroundColor: item.selectedColorHex }}
+                        />
+                      )}
+                      Couleur : {item.selectedColorName}
+                    </p>
+                  )}
                   <p className="text-accent font-semibold mt-1">{formatPrice(item.priceDa)}</p>
 
                   <div className="flex items-center gap-4 mt-4">
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => updateQuantity(item.productId, item.quantity - 1)}
+                        onClick={() => updateQuantity(item.cartKey || item.productId, item.quantity - 1)}
                         className="w-8 h-8 rounded bg-card text-text border border-border hover:border-accent hover:text-accent transition flex items-center justify-center font-semibold"
                       >
                         -
                       </button>
                       <span className="w-12 text-center font-semibold text-text">{item.quantity}</span>
                       <button
-                        onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                        onClick={() => updateQuantity(item.cartKey || item.productId, item.quantity + 1)}
                         className="w-8 h-8 rounded bg-card text-text border border-border hover:border-accent hover:text-accent transition flex items-center justify-center font-semibold"
                       >
                         +
@@ -63,7 +74,7 @@ export default function CartPage() {
                     </div>
 
                     <button
-                      onClick={() => removeItem(item.productId)}
+                      onClick={() => removeItem(item.cartKey || item.productId)}
                       className="text-red-500 hover:text-red-400 text-sm font-medium ml-auto"
                     >
                       Supprimer

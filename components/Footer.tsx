@@ -17,10 +17,6 @@ export default function Footer() {
             <h4 className="font-semibold mb-4">Navigation</h4>
             <ul className="space-y-2 text-sm text-muted">
               <li><Link href="/shop" className="hover:text-text transition">Boutique</Link></li>
-              <li><Link href="/montres-homme" className="hover:text-text transition">Montres homme</Link></li>
-              <li><Link href="/montres-femme" className="hover:text-text transition">Montres femme</Link></li>
-              <li><Link href="/montres-originales-algerie" className="hover:text-text transition">Montres originales</Link></li>
-              <li><Link href="/montres-premium-algerie" className="hover:text-text transition">Montres premium</Link></li>
               <li><Link href="/about" className="hover:text-text transition">À propos</Link></li>
               <li><Link href="/delivery" className="hover:text-text transition">Livraison</Link></li>
               <li><Link href="/contact" className="hover:text-text transition">Contact</Link></li>
@@ -34,6 +30,12 @@ export default function Footer() {
               <li><a href={`tel:${STORE_PHONE}`} className="hover:text-text transition">{STORE_PHONE_DISPLAY}</a></li>
               <li><a href={`mailto:${STORE_EMAIL}`} className="hover:text-text transition">{STORE_EMAIL}</a></li>
             </ul>
+            <Link
+              href="/admin"
+              className="mt-5 inline-flex items-center justify-center rounded-lg border border-border px-4 py-2 text-xs font-semibold text-muted hover:border-accent hover:text-accent"
+            >
+              Accès admin
+            </Link>
           </div>
 
           <div>

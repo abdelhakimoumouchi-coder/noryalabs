@@ -1,21 +1,26 @@
 'use client'
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
+import { colorCartKey } from '@/lib/productColors'
 
 export interface CartItem {
+  cartKey?: string
   productId: string
   name: string
   priceDa: number
   quantity: number
   image: string
   slug: string
+  selectedColorName?: string | null
+  selectedColorHex?: string | null
+  selectedColorImage?: string | null
 }
 
 interface CartContextType {
   items: CartItem[]
   addItem: (item: CartItem) => void
-  removeItem: (productId: string) => void
-  updateQuantity: (productId: string, quantity: number) => void
+  removeItem: (cartKey: string) => void
+  updateQuantity: (cartKey: string, quantity: number) => void
   clearCart: () => void
   totalItems: number
   totalPrice: number
@@ -24,6 +29,13 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined)
 
 const STORAGE_KEY = 'cart'
+
+function withCartKey(item: CartItem): CartItem {
+  return {
+    ...item,
+    cartKey: item.cartKey || colorCartKey(item.productId, item.selectedColorName),
+  }
+}
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
@@ -34,7 +46,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     try {
       const raw = localStorage.getItem(STORAGE_KEY)
       if (raw) {
-        setItems(JSON.parse(raw))
+        const parsed = JSON.parse(raw)
+        setItems(Array.isArray(parsed) ? parsed.map(withCartKey) : [])
       }
     } catch (e) {
       console.warn('Cart storage corrompu, réinitialisation.', e)
@@ -56,7 +69,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const handler = (e: StorageEvent) => {
       if (e.key === STORAGE_KEY && e.newValue) {
         try {
-          setItems(JSON.parse(e.newValue))
+          const parsed = JSON.parse(e.newValue)
+          setItems(Array.isArray(parsed) ? parsed.map(withCartKey) : [])
         } catch {
           /* ignore */
         }
@@ -67,31 +81,32 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const addItem = (newItem: CartItem) => {
+    const normalizedNewItem = withCartKey(newItem)
     setItems(current => {
-      const existing = current.find(item => item.productId === newItem.productId)
+      const existing = current.find(item => withCartKey(item).cartKey === normalizedNewItem.cartKey)
       if (existing) {
         return current.map(item =>
-          item.productId === newItem.productId
-            ? { ...item, quantity: item.quantity + newItem.quantity }
+          withCartKey(item).cartKey === normalizedNewItem.cartKey
+            ? { ...withCartKey(item), quantity: item.quantity + normalizedNewItem.quantity }
             : item
         )
       }
-      return [...current, newItem]
+      return [...current, normalizedNewItem]
     })
   }
 
-  const removeItem = (productId: string) => {
-    setItems(current => current.filter(item => item.productId !== productId))
+  const removeItem = (cartKey: string) => {
+    setItems(current => current.filter(item => withCartKey(item).cartKey !== cartKey))
   }
 
-  const updateQuantity = (productId: string, quantity: number) => {
+  const updateQuantity = (cartKey: string, quantity: number) => {
     if (quantity <= 0) {
-      removeItem(productId)
+      removeItem(cartKey)
       return
     }
     setItems(current =>
       current.map(item =>
-        item.productId === productId ? { ...item, quantity } : item
+        withCartKey(item).cartKey === cartKey ? { ...withCartKey(item), quantity } : item
       )
     )
   }

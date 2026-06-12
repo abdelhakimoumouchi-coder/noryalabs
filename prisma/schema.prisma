@@ -66,6 +66,9 @@ model OrderItem {
   quantity    Int
   unitPriceDa Int
   subtotalDa  Int
+  selectedColorName  String?
+  selectedColorHex   String?
+  selectedColorImage String?
   order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product     Product @relation(fields: [productId], references: [id])
 }

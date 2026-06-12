@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Product } from '@/types'
+import { normalizeProductColors } from '@/lib/productColors'
 
 export const SITE_URL = 'https://storedzone.store'
 export const SITE_NAME = 'Store DZ'
@@ -37,12 +38,14 @@ export function normalizeImages(images: unknown): string[] {
 }
 
 export function normalizeProduct(product: any): Product {
+  const images = normalizeImages(product.images)
+  const normalizedImages = images.length > 0 ? images : ['/placeholder.jpg']
   return {
     ...product,
     oldPriceDa: product.oldPriceDa && product.oldPriceDa > product.priceDa ? product.oldPriceDa : null,
     benefits: Array.isArray(product.benefits) ? product.benefits : [],
-    images: normalizeImages(product.images).length > 0 ? normalizeImages(product.images) : ['/placeholder.jpg'],
-    colors: Array.isArray(product.colors) ? product.colors : [],
+    images: normalizedImages,
+    colors: normalizeProductColors(product.colors, normalizedImages),
   }
 }
 

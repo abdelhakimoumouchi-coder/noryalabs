@@ -12,6 +12,9 @@ export default async function HomePage() {
     where: { isFeatured: true },
     take: 6,
     orderBy: { createdAt: 'desc' },
+  }).catch((error) => {
+    console.error('Unable to load featured products:', error)
+    return []
   })
   const featuredProducts = featuredProductsRaw.map(normalizeProduct) as Product[]
 
@@ -130,7 +133,7 @@ export default async function HomePage() {
                 Montres homme premium originales en Algérie, adaptées au quotidien, au travail et aux cadeaux.
               </p>
               <Link
-                href="/montres-homme"
+                href="/shop?gender=homme"
                 className="text-accent font-semibold hover:underline">
                 Voir les montres homme →
               </Link>
@@ -156,7 +159,7 @@ export default async function HomePage() {
                 Montres femme élégantes et raffinées, livrées partout en Algérie avec garantie 2 ans.
               </p>
               <Link
-                href="/montres-femme"
+                href="/shop?gender=femme"
                 className="text-accent font-semibold hover:underline">
                 Voir les montres femme →
               </Link>
@@ -244,8 +247,8 @@ export default async function HomePage() {
           </div>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link href="/shop" className="btn-secondary">découvrir nos montres premium</Link>
-            <Link href="/montres-originales-algerie" className="btn-secondary">acheter une montre originale en Algérie</Link>
-            <Link href="/montres-premium-algerie" className="btn-secondary">montres premium en Algérie</Link>
+            <Link href="/shop" className="btn-secondary">acheter une montre originale en Algérie</Link>
+            <Link href="/shop" className="btn-secondary">montres premium en Algérie</Link>
             <Link href="/delivery" className="btn-secondary">livraison de montres en Algérie</Link>
           </div>
         </div>

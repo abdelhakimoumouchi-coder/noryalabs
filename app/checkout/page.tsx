@@ -71,6 +71,9 @@ export default function CheckoutPage() {
           items: items.map(item => ({
             productId: item.productId,
             quantity: item.quantity,
+            selectedColorName: item.selectedColorName || null,
+            selectedColorHex: item.selectedColorHex || null,
+            selectedColorImage: item.selectedColorImage || null,
           })),
           turnstileToken: token, // <-- ajout
         }),
@@ -253,9 +256,20 @@ export default function CheckoutPage() {
 
             <div className="space-y-3 mb-6 max-h-64 overflow-y-auto">
               {items.map((item) => (
-                <div key={item.productId} className="flex justify-between text-sm">
+                <div key={item.cartKey || item.productId} className="flex justify-between gap-3 text-sm">
                   <span className="text-text/70">
                     {item.name} × {item.quantity}
+                    {item.selectedColorName && (
+                      <span className="mt-1 flex items-center gap-1 text-xs text-muted">
+                        {item.selectedColorHex && (
+                          <span
+                            className="inline-block h-3 w-3 rounded-full border border-border"
+                            style={{ backgroundColor: item.selectedColorHex }}
+                          />
+                        )}
+                        Couleur : {item.selectedColorName}
+                      </span>
+                    )}
                   </span>
                   <span className="font-semibold">{formatPrice(item.priceDa * item.quantity)}</span>
                 </div>

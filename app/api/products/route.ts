@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { normalizeProduct } from '@/lib/seo'
 
 function normalizeImages(images: any): string[] {
   if (!Array.isArray(images)) return []
@@ -35,10 +36,13 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
 
     const category = searchParams.get('category')
+    const gender = searchParams.get('gender')
     const subcategory = searchParams.get('subcategory')
+    const brand = searchParams.get('brand')
     const priceMin = searchParams.get('priceMin')
     const priceMax = searchParams.get('priceMax')
     const promotion = searchParams.get('promotion')
+    const inStock = searchParams.get('inStock')
     const page = parseInt(searchParams.get('page') || '1')
     const pageSize = parseInt(searchParams.get('pageSize') || '12')
     const sort = searchParams.get('sort') || 'createdAt'
@@ -49,10 +53,18 @@ export async function GET(request: NextRequest) {
       where.category = category
     }
 
+    if (gender && !category) {
+      where.category = { contains: gender, mode: 'insensitive' }
+    }
+
     if (subcategory) {
       where.subcategory = {
         name: subcategory,
       }
+    }
+
+    if (brand) {
+      where.name = { contains: brand, mode: 'insensitive' }
     }
 
     if (priceMin || priceMax) {
@@ -64,6 +76,10 @@ export async function GET(request: NextRequest) {
 
     if (promotion === 'true') {
       where.oldPriceDa = { not: null }
+    }
+
+    if (inStock === 'true') {
+      where.stock = { gt: 0 }
     }
 
     const orderBy: any = {}
@@ -84,17 +100,7 @@ export async function GET(request: NextRequest) {
       prisma.product.count({ where }),
     ])
 
-    //  transformation clean + fallback image
-    const products = productsRaw.map((p) => {
-      const imgs = normalizeImages(p.images)
-
-      return {
-        ...p,
-        oldPriceDa:
-          p.oldPriceDa && p.oldPriceDa > p.priceDa ? p.oldPriceDa : null,
-        images: imgs.length > 0 ? imgs : ['/placeholder.jpg'], // fallback
-      }
-    })
+    const products = productsRaw.map((p) => normalizeProduct({ ...p, images: normalizeImages(p.images) }))
 
     return NextResponse.json({
       products,

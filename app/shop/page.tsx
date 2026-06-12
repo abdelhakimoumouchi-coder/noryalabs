@@ -7,7 +7,7 @@ import { Category, Product } from '@/types'
 export const dynamic = 'force-dynamic'
 
 type ShopPageProps = {
-  searchParams?: Promise<{ category?: string }>
+  searchParams?: Promise<{ category?: string; gender?: string; brand?: string; inStock?: string }>
 }
 
 function decodeCategory(category?: string) {
@@ -48,6 +48,14 @@ export async function generateMetadata({ searchParams }: ShopPageProps): Promise
   const params = await searchParams
   const category = decodeCategory(params?.category)
   if (category) return metadataForCategory(category)
+  if (params?.gender || params?.brand || params?.inStock) {
+    return buildPageMetadata({
+      title: 'Boutique Montres Homme & Femme Premium en Algérie - Store DZ',
+      description: 'Découvrez notre boutique de montres homme et femme premium en Algérie. Produits 100% originaux, garantie 2 ans, livraison dans les 58 wilayas et paiement à la livraison.',
+      path: '/shop',
+      robots: 'noindex, follow',
+    })
+  }
 
   return buildPageMetadata({
     title: 'Boutique Montres Homme & Femme Premium en Algérie - Store DZ',
@@ -59,21 +67,36 @@ export async function generateMetadata({ searchParams }: ShopPageProps): Promise
 export default async function ShopPage({ searchParams }: ShopPageProps) {
   const params = await searchParams
   const category = decodeCategory(params?.category)
-  const where = category ? { category } : {}
+  const gender = params?.gender === 'homme' || params?.gender === 'femme' || params?.gender === 'unisexe' ? params.gender : ''
+  const brand = decodeCategory(params?.brand)
+  const where: any = {}
+  if (category) where.category = category
+  else if (gender) where.category = { contains: gender, mode: 'insensitive' }
+  if (brand) where.name = { contains: brand, mode: 'insensitive' }
+  if (params?.inStock === 'true') where.stock = { gt: 0 }
 
-  const [productsRaw, total, categoriesRaw] = await Promise.all([
-    prisma.product.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-      take: 12,
-      include: { subcategory: true },
-    }),
-    prisma.product.count({ where }),
-    prisma.category.findMany({ orderBy: { order: 'asc' } }),
-  ])
+  let products: Product[] = []
+  let categories: Category[] = []
+  let total = 0
 
-  const products = productsRaw.map(normalizeProduct) as Product[]
-  const categories = categoriesRaw as Category[]
+  try {
+    const [productsRaw, productCount, categoriesRaw] = await Promise.all([
+      prisma.product.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        take: 12,
+        include: { subcategory: true },
+      }),
+      prisma.product.count({ where }),
+      prisma.category.findMany({ orderBy: { order: 'asc' } }),
+    ])
+
+    products = productsRaw.map(normalizeProduct) as Product[]
+    categories = categoriesRaw as Category[]
+    total = productCount
+  } catch (error) {
+    console.error('Unable to load shop data:', error)
+  }
 
   const collectionJsonLd = {
     '@context': 'https://schema.org',
@@ -95,6 +118,9 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
         initialProducts={products}
         initialCategories={categories}
         initialCategory={category}
+        initialGender={gender}
+        initialBrand={brand}
+        initialInStock={params?.inStock === 'true'}
         initialPagination={{
           page: 1,
           pageSize: 12,

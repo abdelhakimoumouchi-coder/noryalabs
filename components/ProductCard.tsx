@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { formatPrice } from '@/lib/utils'
 import { Product } from '@/types'
 import { useCart } from '@/contexts/CartContext'
-import { useRouter } from 'next/navigation'
 import { categoryLabel } from '@/lib/seo'
 
 const FALLBACK_IMG = '/placeholder.jpg'
@@ -17,9 +16,9 @@ const pickLocalImage = (images: string[]) => {
 
 export default function ProductCard({ product }: { product: Product }) {
   const { addItem } = useCart()
-  const router = useRouter()
 
-  const mainImage = pickLocalImage(product.images || [])
+  const firstColor = Array.isArray(product.colors) && product.colors.length > 0 ? product.colors[0] : null
+  const mainImage = firstColor?.imageUrl || pickLocalImage(product.images || [])
   const isOutOfStock = product.stock <= 0
   const hasPromotion = !!product.oldPriceDa && product.oldPriceDa > product.priceDa
   const discountPercent = hasPromotion
@@ -37,17 +36,14 @@ export default function ProductCard({ product }: { product: Product }) {
       quantity: 1,
       image: mainImage,
       slug: product.slug ?? '',
+      selectedColorName: firstColor?.name || null,
+      selectedColorHex: firstColor?.hex || null,
+      selectedColorImage: firstColor?.imageUrl || null,
     })
   }
 
-  const handleBuyNow = () => {
-    if (isOutOfStock) return
-    handleAddToCart()
-    router.push('/checkout')
-  }
-
   return (
-    <div className="group card overflow-hidden bg-gradient-to-b from-card to-surface hover:shadow-soft hover:-translate-y-1 transition duration-200 border border-border/60 rounded-lg sm:rounded-xl">
+    <article className="group overflow-hidden rounded-xl border border-border/70 bg-gradient-to-b from-card to-surface shadow-card transition duration-200 hover:-translate-y-1 hover:border-accent/60 hover:shadow-soft">
       <Link href={href} className="block">
         <div className="relative aspect-square overflow-hidden bg-highlight">
           <img
@@ -75,14 +71,32 @@ export default function ProductCard({ product }: { product: Product }) {
               -{discountPercent}%
             </span>
           )}
+          <span className="absolute bottom-2 right-2 hidden rounded-full bg-background/85 px-3 py-1 text-xs font-semibold text-text backdrop-blur transition group-hover:block">
+            Voir
+          </span>
         </div>
       </Link>
 
-      <div className="p-2.5 sm:p-4 space-y-2 sm:space-y-3">
+      <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
         <p className="text-[10px] sm:text-xs text-muted uppercase tracking-wide truncate">{categoryLabel(product.category)}</p>
-        <h3 className="font-heading text-sm sm:text-lg font-semibold text-text line-clamp-2 leading-snug">
-          {product.name}
-        </h3>
+        <Link href={href}>
+          <h3 className="font-heading text-sm sm:text-lg font-semibold text-text line-clamp-2 leading-snug hover:text-accent">
+            {product.name}
+          </h3>
+        </Link>
+        {product.colors && product.colors.length > 0 && (
+          <div className="flex items-center gap-1.5">
+            {product.colors.slice(0, 4).map((color) => (
+              <span
+                key={color.name}
+                className="h-4 w-4 rounded-full border border-white/25"
+                style={{ backgroundColor: color.hex || '#C6A15B' }}
+                title={color.name}
+              />
+            ))}
+            {product.colors.length > 4 && <span className="text-xs text-muted">+{product.colors.length - 4}</span>}
+          </div>
+        )}
         <div>
           {hasPromotion && (
             <p className="text-xs sm:text-sm text-muted line-through">{formatPrice(product.oldPriceDa!)}</p>
@@ -90,41 +104,39 @@ export default function ProductCard({ product }: { product: Product }) {
           <p className="text-base sm:text-xl font-bold text-accent">{formatPrice(product.priceDa)}</p>
         </div>
 
-        <div className="space-y-2">
-          <div className="hidden md:flex flex-col gap-2 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition duration-200">
+        <div className="space-y-2 pt-1">
+          <div className="hidden md:grid grid-cols-2 gap-2 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition duration-200">
+            <Link
+              href={href}
+              className="w-full px-3 py-2 text-center text-sm rounded-lg border border-border text-text hover:border-accent hover:text-accent transition"
+            >
+              Voir le produit
+            </Link>
             <button
               onClick={handleAddToCart}
               disabled={isOutOfStock}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-border text-text hover:border-accent hover:text-accent transition"
-            >
-              {isOutOfStock ? 'Indisponible' : 'Ajouter au panier'}
-            </button>
-            <button
-              onClick={handleBuyNow}
-              disabled={isOutOfStock}
-              className="w-full px-3 py-2 text-sm rounded-lg bg-accent text-background hover:bg-accentDark transition"
-            >
-              {isOutOfStock ? 'Rupture de stock' : 'Acheter maintenant'}
-            </button>
-          </div>
-          <div className="flex md:hidden flex-col gap-1.5">
-            <button
-              onClick={handleAddToCart}
-              disabled={isOutOfStock}
-              className="w-full px-2 py-1.5 text-[11px] rounded-lg border border-border text-text hover:border-accent hover:text-accent transition"
+              className="w-full px-3 py-2 text-sm rounded-lg bg-accent text-background hover:bg-accentDark transition disabled:bg-gray-600"
             >
               {isOutOfStock ? 'Indispo' : 'Ajouter'}
             </button>
-            <button
-              onClick={handleBuyNow}
-              disabled={isOutOfStock}
-              className="w-full px-2 py-1.5 text-[11px] rounded-lg bg-accent text-background hover:bg-accentDark transition"
+          </div>
+          <div className="grid md:hidden grid-cols-1 gap-1.5">
+            <Link
+              href={href}
+              className="w-full px-2 py-2 text-center text-[11px] rounded-lg border border-border text-text hover:border-accent hover:text-accent transition"
             >
-              {isOutOfStock ? 'Rupture' : 'Acheter'}
+              Voir le produit
+            </Link>
+            <button
+              onClick={handleAddToCart}
+              disabled={isOutOfStock}
+              className="w-full px-2 py-2 text-[11px] rounded-lg bg-accent text-background hover:bg-accentDark transition disabled:bg-gray-600"
+            >
+              {isOutOfStock ? 'Indispo' : 'Ajouter'}
             </button>
           </div>
         </div>
       </div>
-    </div>
+    </article>
   )
 }

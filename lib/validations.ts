@@ -25,6 +25,9 @@ export const checkoutSchema = z.object({
   items: z.array(z.object({
     productId: z.string(),
     quantity: z.number().min(1).int(),
+    selectedColorName: z.string().nullable().optional(),
+    selectedColorHex: z.string().nullable().optional(),
+    selectedColorImage: z.string().nullable().optional(),
   })).min(1, 'Le panier est vide'),
 })
 
@@ -64,7 +67,16 @@ export const adminProductSchema = z.object({
   // multi images obligatoires
   images: z.array(imageStringSchema).min(1),
 
-  colors: z.array(z.string()).optional(),
+  colors: z.array(z.union([
+    z.string(),
+    z.object({
+      name: z.string().min(1),
+      hex: z.string().optional().nullable(),
+      imageUrl: z.string().optional().nullable(),
+      stock: z.number().int().min(0).optional().nullable(),
+      sortOrder: z.number().int().min(0).optional().nullable(),
+    }),
+  ])).optional(),
 
   benefits: z.array(z.string()).optional(),
 

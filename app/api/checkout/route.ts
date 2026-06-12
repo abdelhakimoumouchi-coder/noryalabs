@@ -49,6 +49,9 @@ export async function POST(req: NextRequest) {
         quantity: qty,
         unitPriceDa: product.priceDa,
         subtotalDa: lineTotal,
+        selectedColorName: item.selectedColorName?.trim() || null,
+        selectedColorHex: item.selectedColorHex?.trim() || null,
+        selectedColorImage: item.selectedColorImage?.trim() || null,
       }
     })
 

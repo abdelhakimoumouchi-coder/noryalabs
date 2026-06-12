@@ -113,9 +113,22 @@ export default function AdminOrdersPage() {
                     <td className="px-6 py-4 text-sm text-text">
                       <ul className="space-y-1">
                         {(order.items || []).map((it) => (
-                          <li key={it.id} className="flex justify-between gap-2">
-                            <span className="truncate">{it.product?.name ?? 'Produit'}</span>
-                            <span className="whitespace-nowrap">x{it.quantity}</span>
+                          <li key={it.id} className="space-y-1">
+                            <div className="flex justify-between gap-2">
+                              <span className="truncate">{it.product?.name ?? 'Produit'}</span>
+                              <span className="whitespace-nowrap">x{it.quantity}</span>
+                            </div>
+                            {it.selectedColorName && (
+                              <div className="flex items-center gap-2 text-xs text-muted">
+                                {it.selectedColorHex && (
+                                  <span
+                                    className="inline-block h-3 w-3 rounded-full border border-border"
+                                    style={{ backgroundColor: it.selectedColorHex }}
+                                  />
+                                )}
+                                Couleur choisie : {it.selectedColorName}
+                              </div>
+                            )}
                           </li>
                         ))}
                         {(!order.items || order.items.length === 0) && (

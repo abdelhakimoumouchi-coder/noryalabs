@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import ProductDetailsClient from '@/components/ProductDetailsClient'
+import ProductCard from '@/components/ProductCard'
 import { prisma } from '@/lib/prisma'
 import { absoluteUrl, buildPageMetadata, categoryLabel, normalizeProduct, SITE_URL, truncateMeta } from '@/lib/seo'
 import { Product } from '@/types'
@@ -15,9 +16,51 @@ async function getProduct(slug: string) {
   const product = await prisma.product.findUnique({
     where: { slug },
     include: { subcategory: true },
+  }).catch((error) => {
+    console.error(`Unable to load product ${slug}:`, error)
+    return null
   })
 
   return product ? (normalizeProduct(product) as Product) : null
+}
+
+async function getSuggestedProducts(product: Product) {
+  const productsRaw = await prisma.product.findMany({
+    where: {
+      id: { not: product.id },
+      stock: { gt: 0 },
+      description: { not: '' },
+      category: product.category,
+    },
+    orderBy: [{ isFeatured: 'desc' }, { updatedAt: 'desc' }],
+    take: 4,
+    include: { subcategory: true },
+  }).catch((error) => {
+    console.error(`Unable to load suggestions for ${product.slug}:`, error)
+    return []
+  })
+
+  if (productsRaw.length >= 4) {
+    return productsRaw.map(normalizeProduct) as Product[]
+  }
+
+  const fallbackRaw = await prisma.product.findMany({
+    where: {
+      id: {
+        notIn: [product.id, ...productsRaw.map((item) => item.id)],
+      },
+      stock: { gt: 0 },
+      description: { not: '' },
+    },
+    orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
+    take: 4 - productsRaw.length,
+    include: { subcategory: true },
+  }).catch((error) => {
+    console.error(`Unable to load fallback suggestions for ${product.slug}:`, error)
+    return []
+  })
+
+  return [...productsRaw, ...fallbackRaw].map(normalizeProduct) as Product[]
 }
 
 function productDescription(product: Product) {
@@ -59,6 +102,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   if (!product) notFound()
 
+  const suggestions = await getSuggestedProducts(product)
+
   const productJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -83,6 +128,21 @@ export default async function ProductPage({ params }: ProductPageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
       />
       <ProductDetailsClient product={product} />
+      {suggestions.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+          <div className="mb-7 flex items-end justify-between gap-4">
+            <div>
+              <h2 className="font-heading text-2xl sm:text-3xl font-bold">Vous aimerez aussi</h2>
+              <p className="mt-2 text-muted">Des montres similaires disponibles chez Store DZ.</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+            {suggestions.map((suggestion) => (
+              <ProductCard key={suggestion.id} product={suggestion} />
+            ))}
+          </div>
+        </section>
+      )}
     </>
   )
 }
