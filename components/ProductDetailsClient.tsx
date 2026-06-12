@@ -9,6 +9,7 @@ import { formatPrice } from '@/lib/utils'
 import { useToast } from '@/components/Toast'
 import { Product, ProductColor } from '@/types'
 import { categoryLabel, STORE_PHONE } from '@/lib/seo'
+import { colorAvailableStock, hasVariantStock, productAvailableStock } from '@/lib/productColors'
 
 const FALLBACK_IMAGE = '/placeholder.jpg'
 
@@ -24,7 +25,7 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
   const colors = Array.isArray(product.colors) ? product.colors : []
   const benefits = Array.isArray(product.benefits) ? product.benefits : []
   const [quantity, setQuantity] = useState(1)
-  const [selectedColor, setSelectedColor] = useState<ProductColor | null>(colors[0] || null)
+  const [selectedColor, setSelectedColor] = useState<ProductColor | null>(null)
   const [selectedImage, setSelectedImage] = useState(0)
 
   const displayImages = useMemo(() => {
@@ -33,9 +34,14 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
     return [selectedColorImage, ...images.filter((img) => img !== selectedColorImage)]
   }, [images, selectedColor])
 
-  const isOutOfStock = product.stock <= 0
-  const selectedColorOutOfStock = selectedColor?.stock === 0
-  const cannotOrder = isOutOfStock || selectedColorOutOfStock
+  const variantsControlStock = hasVariantStock(colors)
+  const totalAvailableStock = productAvailableStock(product.stock, colors)
+  const selectedAvailableStock = selectedColor ? colorAvailableStock(selectedColor, product.stock) : totalAvailableStock
+  const requiresColorSelection = colors.length > 0
+  const isOutOfStock = totalAvailableStock <= 0
+  const selectedColorOutOfStock = selectedColor ? selectedAvailableStock <= 0 : false
+  const cannotOrder = isOutOfStock || selectedColorOutOfStock || (requiresColorSelection && !selectedColor)
+  const maxQuantity = Math.max(0, selectedColor ? selectedAvailableStock : totalAvailableStock)
   const currentImage = displayImages[selectedImage] || displayImages[0] || FALLBACK_IMAGE
   const displayDescription = product.description?.trim() ||
     `${product.name} est une ${categoryLabel(product.category).toLowerCase()} disponible chez Store DZ en Algérie, avec livraison nationale et paiement à la livraison.`
@@ -47,6 +53,7 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
   const selectColor = (color: ProductColor) => {
     setSelectedColor(color)
     setSelectedImage(0)
+    setQuantity((current) => Math.min(current, Math.max(1, colorAvailableStock(color, product.stock))))
   }
 
   const addToCart = (goToCheckout = false) => {
@@ -59,9 +66,11 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
       quantity,
       image: colorImage(selectedColor) || currentImage,
       slug: product.slug,
+      variantId: selectedColor?.id || selectedColor?.name || null,
       selectedColorName: selectedColor?.name || null,
       selectedColorHex: selectedColor?.hex || null,
       selectedColorImage: colorImage(selectedColor) || null,
+      maxAvailableStock: maxQuantity || null,
     })
 
     showToast(selectedColor ? `Ajouté au panier - ${selectedColor.name}` : 'Produit ajouté au panier', 'success')
@@ -121,9 +130,13 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
               <div className="mt-4">
                 {isOutOfStock ? (
                   <span className="inline-flex rounded-full bg-red-600 px-3 py-1 text-sm font-semibold text-white">Rupture de stock</span>
+                ) : selectedColor ? (
+                  <span className="inline-flex rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-sm font-semibold text-green-300">
+                    {selectedColor.name} : {selectedAvailableStock} pièce{selectedAvailableStock > 1 ? 's' : ''} disponible{selectedAvailableStock > 1 ? 's' : ''}
+                  </span>
                 ) : (
                   <span className="inline-flex rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-sm font-semibold text-green-300">
-                    Disponible - {product.stock} en stock
+                    Stock total : {totalAvailableStock} pièce{totalAvailableStock > 1 ? 's' : ''}
                   </span>
                 )}
               </div>
@@ -137,7 +150,8 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
                   <div className="flex flex-wrap gap-2">
                     {colors.map((color) => {
                       const active = selectedColor?.name === color.name
-                      const disabled = color.stock === 0
+                      const colorStock = colorAvailableStock(color, product.stock)
+                      const disabled = colorStock <= 0
                       return (
                         <button
                           key={color.name}
@@ -156,12 +170,17 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
                             style={{ backgroundColor: color.hex || '#C6A15B' }}
                           />
                           <span>{color.name}</span>
+                          {variantsControlStock && <span className="text-xs opacity-75">({colorStock})</span>}
                         </button>
                       )
                     })}
                   </div>
-                  {selectedColorOutOfStock && (
-                    <p className="mt-2 text-sm text-red-300">Cette couleur est actuellement indisponible.</p>
+                  {selectedColorOutOfStock ? (
+                    <p className="mt-2 text-sm text-red-300">Rupture pour cette couleur.</p>
+                  ) : !selectedColor ? (
+                    <p className="mt-2 text-sm text-muted">Choisissez une couleur pour voir son stock et commander.</p>
+                  ) : (
+                    <p className="mt-2 text-sm text-muted">Quantité maximale pour {selectedColor.name} : {selectedAvailableStock}.</p>
                   )}
                 </div>
               )}
@@ -181,7 +200,8 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
                     <span className="w-10 text-center font-semibold">{quantity}</span>
                     <button
                       type="button"
-                      onClick={() => setQuantity((q) => Math.min(product.stock, q + 1))}
+                      onClick={() => setQuantity((q) => Math.min(maxQuantity, q + 1))}
+                      disabled={quantity >= maxQuantity}
                       className="h-9 w-9 rounded bg-surface font-semibold text-text hover:text-accent"
                       aria-label="Augmenter la quantité"
                     >
@@ -198,7 +218,7 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
                   disabled={cannotOrder}
                   className="w-full rounded-lg bg-accent px-5 py-4 font-semibold text-background transition hover:bg-accentDark disabled:cursor-not-allowed disabled:bg-gray-500"
                 >
-                  {cannotOrder ? 'Produit indisponible' : 'Ajouter au panier'}
+                  {requiresColorSelection && !selectedColor ? 'Choisissez une couleur' : cannotOrder ? 'Produit indisponible' : 'Ajouter au panier'}
                 </button>
                 <button
                   type="button"
@@ -206,7 +226,7 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
                   disabled={cannotOrder}
                   className="w-full rounded-lg border border-accent px-5 py-4 font-semibold text-accent transition hover:bg-accent hover:text-background disabled:cursor-not-allowed disabled:border-gray-500 disabled:text-gray-500"
                 >
-                  Commander maintenant
+                  {requiresColorSelection && !selectedColor ? 'Choisissez une couleur' : 'Commander maintenant'}
                 </button>
                 <a
                   href={`https://wa.me/${STORE_PHONE.replace('+', '')}?text=${encodeURIComponent(`Bonjour, je suis intéressé par ${product.name}`)}`}
@@ -257,7 +277,10 @@ export default function ProductDetailsClient({ product }: { product: Product }) 
         </section>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 p-3 backdrop-blur lg:hidden">
+      <div
+        className="fixed inset-x-0 z-40 border-t border-border bg-background/95 p-3 backdrop-blur lg:hidden"
+        style={{ bottom: 'calc(72px + env(safe-area-inset-bottom))' }}
+      >
         <div className="mx-auto flex max-w-7xl items-center gap-3">
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold">{product.name}</p>

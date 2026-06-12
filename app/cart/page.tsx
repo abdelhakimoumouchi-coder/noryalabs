@@ -54,6 +54,11 @@ export default function CartPage() {
                       Couleur : {item.selectedColorName}
                     </p>
                   )}
+                  {item.maxAvailableStock != null && (
+                    <p className="mt-1 text-xs text-muted">
+                      Stock disponible au moment de l’ajout : {item.maxAvailableStock} pièce{item.maxAvailableStock > 1 ? 's' : ''}
+                    </p>
+                  )}
                   <p className="text-accent font-semibold mt-1">{formatPrice(item.priceDa)}</p>
 
                   <div className="flex items-center gap-4 mt-4">

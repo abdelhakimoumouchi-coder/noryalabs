@@ -5,6 +5,7 @@ import { formatPrice } from '@/lib/utils'
 import { Product } from '@/types'
 import { useCart } from '@/contexts/CartContext'
 import { categoryLabel } from '@/lib/seo'
+import { colorAvailableStock, productAvailableStock } from '@/lib/productColors'
 
 const FALLBACK_IMG = '/placeholder.jpg'
 
@@ -17,9 +18,11 @@ const pickLocalImage = (images: string[]) => {
 export default function ProductCard({ product }: { product: Product }) {
   const { addItem } = useCart()
 
-  const firstColor = Array.isArray(product.colors) && product.colors.length > 0 ? product.colors[0] : null
+  const colors = Array.isArray(product.colors) ? product.colors : []
+  const firstColor = colors.find((color) => colorAvailableStock(color, product.stock) > 0) || colors[0] || null
   const mainImage = firstColor?.imageUrl || pickLocalImage(product.images || [])
-  const isOutOfStock = product.stock <= 0
+  const availableStock = productAvailableStock(product.stock, colors)
+  const isOutOfStock = availableStock <= 0
   const hasPromotion = !!product.oldPriceDa && product.oldPriceDa > product.priceDa
   const discountPercent = hasPromotion
     ? Math.round(((product.oldPriceDa! - product.priceDa) / product.oldPriceDa!) * 100)
@@ -36,9 +39,11 @@ export default function ProductCard({ product }: { product: Product }) {
       quantity: 1,
       image: mainImage,
       slug: product.slug ?? '',
+      variantId: firstColor?.id || firstColor?.name || null,
       selectedColorName: firstColor?.name || null,
       selectedColorHex: firstColor?.hex || null,
       selectedColorImage: firstColor?.imageUrl || null,
+      maxAvailableStock: firstColor ? colorAvailableStock(firstColor, product.stock) : availableStock,
     })
   }
 

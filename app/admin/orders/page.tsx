@@ -115,7 +115,7 @@ export default function AdminOrdersPage() {
                         {(order.items || []).map((it) => (
                           <li key={it.id} className="space-y-1">
                             <div className="flex justify-between gap-2">
-                              <span className="truncate">{it.product?.name ?? 'Produit'}</span>
+                              <span className="truncate">{it.productNameSnapshot || it.product?.name || 'Produit'}</span>
                               <span className="whitespace-nowrap">x{it.quantity}</span>
                             </div>
                             {it.selectedColorName && (

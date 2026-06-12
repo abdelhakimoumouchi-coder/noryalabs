@@ -151,6 +151,9 @@ export default function CreateProduct() {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)+/g, '');
 
+  const variantStockTotal = colorVariants.reduce((sum, color) => sum + (color.stock ? Math.max(0, parseInt(color.stock) || 0) : 0), 0);
+  const hasVariantStocks = colorVariants.some((color) => color.name.trim());
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -173,10 +176,10 @@ export default function CreateProduct() {
             name: color.name.trim(),
             hex: color.hex.trim() || null,
             imageUrl: color.imageUrl || null,
-            stock: color.stock ? parseInt(color.stock) : null,
+            stock: hasVariantStocks ? (color.stock ? parseInt(color.stock) : 0) : null,
             sortOrder: index,
           })),
-        stock: parseInt(formData.stock),
+        stock: hasVariantStocks ? variantStockTotal : parseInt(formData.stock),
         featured: formData.featured,
       };
 
@@ -317,8 +320,12 @@ export default function CreateProduct() {
                 placeholder="Nombre en stock"
                 value={formData.stock}
                 onChange={handleChange}
+                disabled={hasVariantStocks}
                 className="w-full px-4 py-3 bg-[#0f172a] border border-white/10 rounded-xl text-white"
               />
+              {hasVariantStocks && (
+                <p className="mt-2 text-xs text-[#d4af37]">Stock total calculé depuis les couleurs : {variantStockTotal} pièces.</p>
+              )}
             </div>
           </div>
 
@@ -419,6 +426,11 @@ export default function CreateProduct() {
 
           {colorVariants.length === 0 && (
             <p className="text-sm text-gray-400">Aucune couleur spécifique. Le produit utilisera ses images générales.</p>
+          )}
+          {hasVariantStocks && (
+            <div className="rounded-xl border border-[#d4af37]/30 bg-[#d4af37]/10 px-4 py-3 text-sm text-[#f4d58a]">
+              Stock total calculé : {variantStockTotal} pièces
+            </div>
           )}
 
           <div className="space-y-4">

@@ -3,6 +3,7 @@ import './globals.css'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import FloatingWhatsApp from '@/components/FloatingWhatsApp'
+import BottomMobileNav from '@/components/BottomMobileNav'
 import { CartProvider } from '@/contexts/CartContext'
 import { homeDescription, homeTitle, SITE_NAME, SITE_URL } from '@/lib/seo'
 
@@ -63,9 +64,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <CartProvider>
           <div className="min-h-screen flex flex-col">
             <Navbar />
-            <main className="flex-1">{children}</main>
+            <main className="flex-1 pb-[calc(84px+env(safe-area-inset-bottom))] md:pb-0">{children}</main>
             <Footer />
             <FloatingWhatsApp />
+            <BottomMobileNav />
           </div>
         </CartProvider>
       </body>

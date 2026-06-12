@@ -28,6 +28,7 @@ export interface Product {
 }
 
 export interface ProductColor {
+  id?: string | null
   name: string
   hex?: string | null
   imageUrl?: string | null
@@ -67,6 +68,8 @@ export interface OrderItem {
   quantity: number
   unitPriceDa: number
   subtotalDa: number
+  productNameSnapshot?: string | null
+  selectedVariantId?: string | null
   selectedColorName?: string | null
   selectedColorHex?: string | null
   selectedColorImage?: string | null

@@ -66,6 +66,8 @@ model OrderItem {
   quantity    Int
   unitPriceDa Int
   subtotalDa  Int
+  productNameSnapshot String?
+  selectedVariantId   String?
   selectedColorName  String?
   selectedColorHex   String?
   selectedColorImage String?

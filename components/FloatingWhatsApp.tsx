@@ -9,7 +9,7 @@ export default function FloatingWhatsApp() {
       href={`https://wa.me/${phoneNumber}?text=${message}`}
       target="_blank"
       rel="noopener noreferrer"
-      className="fixed bottom-6 right-6 z-50 bg-green-500 text-white p-4 rounded-full shadow-lg hover:bg-green-600 transition-all hover:scale-110"
+      className="fixed bottom-6 right-6 z-50 hidden bg-green-500 text-white p-4 rounded-full shadow-lg hover:bg-green-600 transition-all hover:scale-110 md:block"
       aria-label="Contacter sur WhatsApp"
     >
       <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">

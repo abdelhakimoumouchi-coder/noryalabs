@@ -25,6 +25,7 @@ export const checkoutSchema = z.object({
   items: z.array(z.object({
     productId: z.string(),
     quantity: z.number().min(1).int(),
+    variantId: z.string().nullable().optional(),
     selectedColorName: z.string().nullable().optional(),
     selectedColorHex: z.string().nullable().optional(),
     selectedColorImage: z.string().nullable().optional(),
@@ -70,6 +71,7 @@ export const adminProductSchema = z.object({
   colors: z.array(z.union([
     z.string(),
     z.object({
+      id: z.string().optional().nullable(),
       name: z.string().min(1),
       hex: z.string().optional().nullable(),
       imageUrl: z.string().optional().nullable(),

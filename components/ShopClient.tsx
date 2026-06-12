@@ -70,6 +70,12 @@ export default function ShopClient({
     else setSubcategories([])
   }, [filters.category, loadSubcats])
 
+  useEffect(() => {
+    const openFilters = () => setFiltersOpen(true)
+    window.addEventListener('storedzone:open-mobile-filters', openFilters)
+    return () => window.removeEventListener('storedzone:open-mobile-filters', openFilters)
+  }, [])
+
   const fetchProducts = useCallback(async (signal?: AbortSignal) => {
     setLoading(true)
     setError(null)
@@ -351,6 +357,22 @@ export default function ShopClient({
             >
               Réinitialiser
             </button>
+            <div className="mt-3 grid grid-cols-2 gap-2 lg:hidden">
+              <button
+                type="button"
+                onClick={() => setFiltersOpen(false)}
+                className="rounded-lg border border-border px-4 py-3 text-sm font-semibold text-text hover:border-accent"
+              >
+                Fermer
+              </button>
+              <button
+                type="button"
+                onClick={() => setFiltersOpen(false)}
+                className="rounded-lg bg-accent px-4 py-3 text-sm font-semibold text-background hover:bg-accentDark"
+              >
+                Appliquer
+              </button>
+            </div>
           </div>
         </aside>
 

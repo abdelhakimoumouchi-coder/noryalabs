@@ -46,6 +46,7 @@ export function normalizeProductColors(colors: unknown, images: string[] = []): 
         const name = color.trim()
         if (!name) return null
         return {
+          id: name.toLowerCase(),
           name,
           hex: normalizeHex(null, name),
           imageUrl: images[index] || null,
@@ -63,6 +64,7 @@ export function normalizeProductColors(colors: unknown, images: string[] = []): 
       const sortOrder = typeof item.sortOrder === 'number' && Number.isFinite(item.sortOrder) ? item.sortOrder : index
 
       return {
+        id: cleanString(item.id) || name.toLowerCase(),
         name,
         hex: normalizeHex(item.hex, name),
         imageUrl: normalizeImage(item.imageUrl || item.image || item.src),
@@ -78,4 +80,42 @@ export function normalizeProductColors(colors: unknown, images: string[] = []): 
 
 export function colorCartKey(productId: string, colorName?: string | null) {
   return `${productId}:${(colorName || 'default').toLowerCase()}`
+}
+
+export function hasVariantStock(colors: ProductColor[]) {
+  return colors.some((color) => typeof color.stock === 'number')
+}
+
+export function productAvailableStock(productStock: number, colors: ProductColor[]) {
+  if (!colors.length || !hasVariantStock(colors)) return Math.max(0, productStock)
+  return colors.reduce((sum, color) => sum + Math.max(0, color.stock ?? 0), 0)
+}
+
+export function colorAvailableStock(color: ProductColor | null | undefined, fallbackStock: number) {
+  if (!color) return Math.max(0, fallbackStock)
+  return typeof color.stock === 'number' ? Math.max(0, color.stock) : Math.max(0, fallbackStock)
+}
+
+export function decrementColorStock(rawColors: unknown, colorName: string, quantity: number) {
+  if (!Array.isArray(rawColors)) return rawColors
+  return rawColors.map((color) => {
+    if (typeof color === 'string') return color
+    if (!color || typeof color !== 'object') return color
+    const item = color as Record<string, unknown>
+    if (typeof item.name !== 'string' || item.name !== colorName) return color
+    const currentStock = typeof item.stock === 'number' ? item.stock : 0
+    return { ...item, stock: Math.max(0, currentStock - quantity) }
+  })
+}
+
+export function incrementColorStock(rawColors: unknown, colorName: string, quantity: number) {
+  if (!Array.isArray(rawColors)) return rawColors
+  return rawColors.map((color) => {
+    if (typeof color === 'string') return color
+    if (!color || typeof color !== 'object') return color
+    const item = color as Record<string, unknown>
+    if (typeof item.name !== 'string' || item.name !== colorName) return color
+    const currentStock = typeof item.stock === 'number' ? item.stock : 0
+    return { ...item, stock: currentStock + quantity }
+  })
 }

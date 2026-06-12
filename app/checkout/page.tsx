@@ -71,6 +71,7 @@ export default function CheckoutPage() {
           items: items.map(item => ({
             productId: item.productId,
             quantity: item.quantity,
+            variantId: item.variantId || null,
             selectedColorName: item.selectedColorName || null,
             selectedColorHex: item.selectedColorHex || null,
             selectedColorImage: item.selectedColorImage || null,
@@ -268,6 +269,11 @@ export default function CheckoutPage() {
                           />
                         )}
                         Couleur : {item.selectedColorName}
+                      </span>
+                    )}
+                    {item.maxAvailableStock != null && (
+                      <span className="mt-1 block text-xs text-muted">
+                        Stock disponible : {item.maxAvailableStock} pièce{item.maxAvailableStock > 1 ? 's' : ''}
                       </span>
                     )}
                   </span>

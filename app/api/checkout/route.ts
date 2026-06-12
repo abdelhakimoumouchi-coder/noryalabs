@@ -3,6 +3,13 @@ import { prisma } from '@/lib/prisma'
 import type { Prisma } from '@prisma/client'   // <-- ajouté
 import { checkoutSchema } from '@/lib/validations'
 import { findShipping } from '@/lib/shipping'
+import {
+  colorAvailableStock,
+  decrementColorStock,
+  hasVariantStock,
+  normalizeProductColors,
+  productAvailableStock,
+} from '@/lib/productColors'
 
 async function verifyTurnstile(token: string | undefined) {
   const secret = process.env.TURNSTILE_SECRET_KEY
@@ -39,8 +46,24 @@ export async function POST(req: NextRequest) {
       const product = products.find((p: ProductRow) => p.id === item.productId)!
       const qty = Number(item.quantity) || 0
       if (qty <= 0) throw new Error('Quantité invalide')
-      if (product.stock !== undefined && product.stock < qty) {
-        throw new Error(`Stock insuffisant pour ${product.name}`)
+      const productImages = Array.isArray(product.images) ? product.images.filter((src): src is string => typeof src === 'string') : []
+      const colors = normalizeProductColors(product.colors, productImages)
+      const usesVariantStock = hasVariantStock(colors)
+      const selectedColor = item.selectedColorName
+        ? colors.find((color) => color.name === item.selectedColorName)
+        : null
+
+      if (colors.length > 0 && !selectedColor) {
+        throw new Error(`Veuillez choisir une couleur pour ${product.name}`)
+      }
+
+      const availableStock = selectedColor
+        ? colorAvailableStock(selectedColor, product.stock)
+        : productAvailableStock(product.stock, colors)
+
+      if (availableStock < qty) {
+        const label = selectedColor ? `${product.name} (${selectedColor.name})` : product.name
+        throw new Error(`Stock insuffisant pour ${label}. Il reste ${availableStock} pièce${availableStock > 1 ? 's' : ''}.`)
       }
       const lineTotal = product.priceDa * qty
       subtotalDa += lineTotal
@@ -49,9 +72,12 @@ export async function POST(req: NextRequest) {
         quantity: qty,
         unitPriceDa: product.priceDa,
         subtotalDa: lineTotal,
+        productNameSnapshot: product.name,
+        selectedVariantId: item.variantId?.trim() || selectedColor?.id || selectedColor?.name || null,
         selectedColorName: item.selectedColorName?.trim() || null,
         selectedColorHex: item.selectedColorHex?.trim() || null,
         selectedColorImage: item.selectedColorImage?.trim() || null,
+        usesVariantStock,
       }
     })
 
@@ -60,10 +86,23 @@ export async function POST(req: NextRequest) {
 
     const order = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       for (const item of orderItems) {
-        await tx.product.update({
-          where: { id: item.productId },
-          data: { stock: { decrement: item.quantity } },
-        })
+        const product = products.find((p: ProductRow) => p.id === item.productId)!
+        if (item.usesVariantStock && item.selectedColorName) {
+          const nextColors = decrementColorStock(product.colors, item.selectedColorName, item.quantity)
+          const nextNormalizedColors = normalizeProductColors(nextColors, Array.isArray(product.images) ? product.images.filter((src): src is string => typeof src === 'string') : [])
+          await tx.product.update({
+            where: { id: item.productId },
+            data: {
+              colors: nextColors as any,
+              stock: productAvailableStock(product.stock, nextNormalizedColors),
+            },
+          })
+        } else {
+          await tx.product.update({
+            where: { id: item.productId },
+            data: { stock: { decrement: item.quantity } },
+          })
+        }
       }
 
       return tx.order.create({
@@ -77,7 +116,9 @@ export async function POST(req: NextRequest) {
           subtotalDa,
           shippingDa,
           totalDa,
-          items: { create: orderItems },
+          items: {
+            create: orderItems.map(({ usesVariantStock, ...item }) => item),
+          },
         },
       })
     })
@@ -90,7 +131,7 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       )
     }
-    if (typeof error?.message === 'string' && error.message.startsWith('Stock insuffisant')) {
+    if (typeof error?.message === 'string' && (error.message.startsWith('Stock insuffisant') || error.message.startsWith('Veuillez choisir'))) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
     console.error('Checkout error:', error)

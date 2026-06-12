@@ -11,9 +11,11 @@ export interface CartItem {
   quantity: number
   image: string
   slug: string
+  variantId?: string | null
   selectedColorName?: string | null
   selectedColorHex?: string | null
   selectedColorImage?: string | null
+  maxAvailableStock?: number | null
 }
 
 interface CartContextType {
@@ -106,7 +108,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
     setItems(current =>
       current.map(item =>
-        withCartKey(item).cartKey === cartKey ? { ...withCartKey(item), quantity } : item
+        withCartKey(item).cartKey === cartKey
+          ? { ...withCartKey(item), quantity: item.maxAvailableStock ? Math.min(quantity, item.maxAvailableStock) : quantity }
+          : item
       )
     )
   }
